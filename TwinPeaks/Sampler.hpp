@@ -24,6 +24,10 @@ class Sampler
         std::vector<std::tuple<double, double>> scalars;
         std::vector<std::tuple<int, int>> ranks;
 
+        // Distance along space filling curve
+        std::vector<int> dists;
+        std::vector<double> dist_tiebreakers;
+
     public:
 
         // Default constructor disabled
@@ -43,6 +47,8 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
 ,particles(num_particles)
 ,scalars(num_particles)
 ,ranks(num_particles)
+,dists(num_particles)
+,dist_tiebreakers(num_particles)
 {
     // Generate particles from the prior.
     std::cout << "Generating " << num_particles << ' ';
@@ -50,6 +56,7 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
     for(int i=0; i<num_particles; ++i)
     {
         particles[i].from_prior(rng);
+        dist_tiebreakers[i] = rng.rand();
         scalars[i] = particles[i].get_scalars();
     }
     std::cout << "done." << std::endl;
