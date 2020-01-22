@@ -21,6 +21,9 @@ class Sampler
 {
     private:
 
+        // Thinning for full particle output
+        static constexpr int thin = 10;
+
         // Iteration counter
         int iteration;
 
@@ -206,6 +209,18 @@ void Sampler<T>::write_output() const
     // Close the output file
     fout.close();
 
+
+    // Now output entire particle
+    if(iteration % thin != 0)
+        return;
+
+    if(iteration / thin == 1)
+        fout.open("output/particles.csv", std::ios::out);
+    else
+        fout.open("output/particles.csv", std::ios::out | std::ios::app);
+    fout << iteration << ',';
+    fout << particles[worst].render() << std::endl;
+    fout.close();
 }
 
 } // namespace

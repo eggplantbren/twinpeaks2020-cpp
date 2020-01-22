@@ -1,6 +1,7 @@
 #ifndef TwinPeaks_Example_hpp
 #define TwinPeaks_Example_hpp
 
+#include <iomanip>
 #include "Misc.hpp"
 #include "RNG.hpp"
 #include <sstream>
@@ -81,6 +82,7 @@ std::tuple<double, double> Example::get_scalars() const
 std::string Example::render() const
 {
     std::stringstream ss;
+    ss << std::setprecision(12);
     for(int i=0; i<N; ++i)
     {
         ss << xs[i];
