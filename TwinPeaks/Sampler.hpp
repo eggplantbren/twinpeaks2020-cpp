@@ -49,6 +49,9 @@ class Sampler
         // Write dead particle output to files
         void write_output() const;
 
+        // Do one NS iteration
+        void advance(RNG& rng);
+
     public:
 
         // Default constructor disabled
@@ -58,8 +61,8 @@ class Sampler
         // and an RNG for particle initialisation
         Sampler(int _num_particles, RNG& rng);
 
-        // Do one NS iteration
-        void advance(RNG& rng);
+        // Run to target depth
+        void run_to_depth(double depth, RNG& rng);
 };
 
 /* IMPLEMENTATIONS FOLLOW */
@@ -113,14 +116,29 @@ void Sampler<T>::compute_orderings()
 }
 
 template<typename T>
+void Sampler<T>::run_to_depth(double depth, RNG& rng)
+{
+    int iterations = static_cast<int>(num_particles*depth);
+    for(int i=0; i<iterations; ++i)
+        advance(rng);
+}
+
+
+template<typename T>
 void Sampler<T>::advance(RNG& rng)
 {
-    std::cout << "Iteration " << iteration << '.' << std::endl;
+    // Progress message
+    std::cout << std::setprecision(12);
+    std::cout << "Iteration " << iteration << ". ";
+    std::cout << "Depth ~= " << (double)iteration/num_particles << " nats.";
+    std::cout << std::endl;
 
     // Save worst particle
     std::cout << "    Saving worst particle..." << std::flush;
     write_output();
-    std::cout << "done." << std::endl;
+    std::cout << "done. ";
+    std::cout << "Scalars = (" << std::get<0>(scalars[worst]) << ", ";
+    std::cout << std::get<1>(scalars[worst]) << ")." << std::endl;
 
     std::cout << "    Generating replacement particle..." << std::flush;
     // Generate new particle

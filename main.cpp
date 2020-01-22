@@ -6,11 +6,12 @@ using namespace TwinPeaks;
 
 int main()
 {
+    // Create RNG
     RNG rng;
-    Sampler<Example> sampler(1000, rng);
 
-    for(int i=0; i<100000; ++i)
-        sampler.advance(rng);
+    // Create and run sampler
+    Sampler<Example> sampler(1000, rng);
+    sampler.run_to_depth(50.0, rng);
 
     return 0;
 }
