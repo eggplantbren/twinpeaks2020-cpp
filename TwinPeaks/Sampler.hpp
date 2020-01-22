@@ -15,9 +15,14 @@ template<typename T>
 class Sampler
 {
     private:
+
+        // The particles
         int num_particles;
         std::vector<T> particles;
 
+        // The particles' scalars and ranks
+        std::vector<std::tuple<double, double>> scalars;
+        std::vector<std::tuple<int, int>> ranks;
 
     public:
 
@@ -36,12 +41,17 @@ template<typename T>
 Sampler<T>::Sampler(int _num_particles, RNG& rng)
 :num_particles(_num_particles)
 ,particles(num_particles)
+,scalars(num_particles)
+,ranks(num_particles)
 {
     // Generate particles from the prior.
     std::cout << "Generating " << num_particles << ' ';
     std::cout << "particles from the prior..." << std::flush;
     for(int i=0; i<num_particles; ++i)
+    {
         particles[i].from_prior(rng);
+        scalars[i] = particles[i].get_scalars();
+    }
     std::cout << "done." << std::endl;
 }
 
