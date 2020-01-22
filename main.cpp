@@ -10,7 +10,7 @@ int main()
     RNG rng;
 
     // Create and run sampler
-    Sampler<Example> sampler(100, rng);
+    Sampler<Example> sampler(1000, rng);
     sampler.run_to_depth(50.0, rng);
 
     return 0;
