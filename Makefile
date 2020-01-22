@@ -7,6 +7,7 @@ ALL = $(FLAGS) $(INCLUDE) $(OPTIM) $(WARN)
 
 default:
 	$(CXX) $(ALL) -c TwinPeaks/Example.hpp
+	$(CXX) $(ALL) -c TwinPeaks/Misc.hpp
 	$(CXX) $(ALL) -c TwinPeaks/RNG.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Ordering.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Sampler.hpp

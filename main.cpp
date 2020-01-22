@@ -7,8 +7,10 @@ using namespace TwinPeaks;
 int main()
 {
     RNG rng;
-    Sampler<Example> sampler(100, rng);
-    sampler.advance(rng);
+    Sampler<Example> sampler(1000, rng);
+
+    for(int i=0; i<10000; ++i)
+        sampler.advance(rng);
 
     return 0;
 }

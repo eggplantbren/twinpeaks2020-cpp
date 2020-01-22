@@ -1,6 +1,7 @@
 #ifndef TwinPeaks_Example_hpp
 #define TwinPeaks_Example_hpp
 
+#include "Misc.hpp"
 #include "RNG.hpp"
 #include <sstream>
 #include <string>
@@ -20,9 +21,14 @@ class Example
 
     public:
 
-        // Constructor must generate from prior
+        // Constructor
         Example();
+
+        // Generate from prior
         void from_prior(RNG& rng);
+
+        // Metropolis proposal in-place, return log(hastings) for prior sampling
+        double perturb(RNG& rng);
 
         // Return scalars
         std::tuple<double, double> get_scalars() const;
@@ -44,6 +50,14 @@ void Example::from_prior(RNG& rng)
 {
     for(int i=0; i<N; ++i)
         xs[i] = rng.rand();
+}
+
+double Example::perturb(RNG& rng)
+{
+    int k = rng.rand_int(N);
+    xs[k] += rng.randh();
+    wrap(xs[k], 0.0, 1.0);
+    return 0;
 }
 
 std::tuple<double, double> Example::get_scalars() const

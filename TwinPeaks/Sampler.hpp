@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include "Misc.hpp"
 #include "Ordering.hpp"
 #include <ostream>
 #include "RNG.hpp"
@@ -108,13 +109,79 @@ void Sampler<T>::compute_orderings()
 template<typename T>
 void Sampler<T>::advance(RNG& rng)
 {
+    std::cout << "Iteration " << iteration << '.' << std::endl;
+
+    // Save worst particle
+    std::cout << "    Saving worst particle..." << std::flush;
     write_output();
+    std::cout << "done." << std::endl;
 
-    // TODO
+    std::cout << "    Generating replacement particle..." << std::flush;
+    // Generate new particle
+    // First, clone
+    int copy = 0;
+    do
+    {
+        copy = rng.rand_int(num_particles);
+    }while(num_particles > 1 && copy == worst);
+    T new_particle = particles[copy];
+    auto new_particle_scalars = scalars[copy];
+    double new_dist_tiebreaker = dist_tiebreakers[copy];
 
+    // Now do Metropolis
+    static constexpr int mcmc_steps = 1000;
+    int accepted = 0;
+    for(int i=0; i<mcmc_steps; ++i)
+    {
+        // Make proposal (for both particle and tiebreaker value)
+        auto proposal = new_particle;
+        double logH = proposal.perturb(rng);
+        double proposal_dist_tiebreaker = new_dist_tiebreaker + rng.randh();
+        wrap(proposal_dist_tiebreaker, 0.0, 1.0);
+        auto proposal_scalars = proposal.get_scalars();
 
+        // Compute ranks
+        int xr = 0;
+        int yr = 0;
+        for(int j=0; j<num_particles; ++j)
+        {
+            if(std::get<0>(scalars[j]) <= std::get<0>(proposal_scalars))
+                ++xr;
+            if(std::get<1>(scalars[j]) <= std::get<1>(proposal_scalars))
+                ++yr;
+        }
 
+        int proposal_dist = ranks_to_total_order(xr, yr);
+        if((proposal_dist + proposal_dist_tiebreaker >=
+            dists[worst] + dist_tiebreakers[worst]) && 
+           (rng.rand() <= exp(logH)))
+        {
+            new_particle = proposal;
+            new_particle_scalars = proposal_scalars;
+            new_dist_tiebreaker = proposal_dist_tiebreaker;
+            ++accepted;
+        }
+
+    }
+
+    // Insert new particle and recompute stuff
+    particles[worst] = new_particle;
+    scalars[worst] = new_particle_scalars;
+
+    // Is this necessary? Could I just re-generate them all?
+    dist_tiebreakers[worst] = new_dist_tiebreaker;
+    std::cout << "done. ";
+    std::cout << "Metropolis acceptance rate = ";
+    std::cout << accepted << '/' << mcmc_steps << '.' << std::endl;
+
+    // Compute new orderings.
+    std::cout << "    Computing new orderings..." << std::flush;
+    compute_orderings();
+    std::cout << "done." << std::endl;
+
+    // Increment iteration counter
     ++iteration;
+    std::cout << std::endl;
 }
 
 
