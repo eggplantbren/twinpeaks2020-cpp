@@ -2,6 +2,7 @@
 #define TwinPeaks_Sampler_hpp
 
 #include <iostream>
+#include "Ordering.hpp"
 #include "RNG.hpp"
 #include <vector>
 
@@ -27,6 +28,9 @@ class Sampler
         // Distance along space filling curve
         std::vector<int> dists;
         std::vector<double> dist_tiebreakers;
+
+        // Compute all ordering-related stuff
+        void compute_orderings();
 
     public:
 
@@ -59,7 +63,14 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
         dist_tiebreakers[i] = rng.rand();
         scalars[i] = particles[i].get_scalars();
     }
+    compute_orderings();
     std::cout << "done." << std::endl;
+}
+
+template<typename T>
+void Sampler<T>::compute_orderings()
+{
+    ranks = compute_all_ranks(scalars);
 }
 
 } // namespace
