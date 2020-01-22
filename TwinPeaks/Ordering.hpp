@@ -1,5 +1,5 @@
-#ifndef TwinPeaks_Order_hpp
-#define TwinPeaks_Order_hpp
+#ifndef TwinPeaks_Ordering_hpp
+#define TwinPeaks_Ordering_hpp
 
 namespace TwinPeaks
 {
