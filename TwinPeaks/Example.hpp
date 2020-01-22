@@ -2,6 +2,8 @@
 #define TwinPeaks_Example_hpp
 
 #include "RNG.hpp"
+#include <sstream>
+#include <string>
 #include <tuple>
 
 namespace TwinPeaks
@@ -24,6 +26,9 @@ class Example
 
         // Return scalars
         std::tuple<double, double> get_scalars() const;
+
+        // Render as string
+        std::string render() const;
 
 };
 
@@ -57,6 +62,18 @@ std::tuple<double, double> Example::get_scalars() const
     }
 
     return {f1, f2};
+}
+
+std::string Example::render() const
+{
+    std::stringstream ss;
+    for(int i=0; i<N; ++i)
+    {
+        ss << xs[i];
+        if(i < (N-1))
+            ss << ',';
+    }
+    return ss.str();
 }
 
 } // namespace
