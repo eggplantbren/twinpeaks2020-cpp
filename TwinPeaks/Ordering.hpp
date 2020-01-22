@@ -15,6 +15,8 @@ namespace TwinPeaks
 
 int ranks_to_total_order(int x_rank, int y_rank);
 
+// Less than or equal to, with a tiebreaker
+bool leq(double scalar1, double scalar2, double tb1, double tb2);
 
 /*
 * Compute the ranks of scalars[k] with respect
@@ -22,7 +24,8 @@ int ranks_to_total_order(int x_rank, int y_rank);
 */
 std::tuple<int, int>
     compute_rank(int k,
-                const std::vector<std::tuple<double, double>>& scalars);
+                 const std::vector<std::tuple<double, double>>& scalars,
+                 const std::vector<std::tuple<double, double>>& tbs);
 
 
 
@@ -30,10 +33,22 @@ std::tuple<int, int>
 * Compute ranks of all scalars with respect to the whole collection.
 */
 std::vector<std::tuple<int, int>>
-    compute_all_ranks(const std::vector<std::tuple<double, double>>& scalars);
-
+    compute_all_ranks(const std::vector<std::tuple<double, double>>& scalars,
+                      const std::vector<std::tuple<double, double>>& tbs);
 
 /* IMPLEMENTATIONS FOLLOW */
+
+bool leq(double scalar1, double scalar2, double tb1, double tb2)
+{
+    if(scalar1 < scalar2)
+        return true;
+
+    if(scalar1 == scalar2 && tb1 <= tb2)
+        return true;
+
+    return false;
+}
+
 
 
 /*
@@ -69,15 +84,18 @@ int ranks_to_total_order(int x_rank, int y_rank)
 */
 std::tuple<int, int>
     compute_rank(int k,
-                const std::vector<std::tuple<double, double>>& scalars)
+                 const std::vector<std::tuple<double, double>>& scalars,
+                 const std::vector<std::tuple<double, double>>& tbs)
 {
     int x_rank = 0;
     int y_rank = 0;
     for(size_t i=0; i<scalars.size(); ++i)
     {
-        if(std::get<0>(scalars[i]) <= std::get<0>(scalars[k]))
+        if(leq(std::get<0>(scalars[i]), std::get<0>(scalars[k]),
+               std::get<0>(tbs[i]),     std::get<0>(tbs[k])))
             ++x_rank;
-        if(std::get<1>(scalars[i]) <= std::get<1>(scalars[k]))
+        if(leq(std::get<1>(scalars[i]), std::get<1>(scalars[k]),
+               std::get<1>(tbs[i]),     std::get<1>(tbs[k])))
             ++y_rank;
     }
     return {x_rank, y_rank};
@@ -88,14 +106,14 @@ std::tuple<int, int>
 * Compute ranks of all scalars with respect to the whole collection.
 */
 std::vector<std::tuple<int, int>>
-    compute_all_ranks(const std::vector<std::tuple<double, double>>& scalars)
+    compute_all_ranks(const std::vector<std::tuple<double, double>>& scalars,
+                      const std::vector<std::tuple<double, double>>& tbs)
 {
     std::vector<std::tuple<int, int>> result(scalars.size());
     for(size_t i=0; i<scalars.size(); ++i)
-        result[i] = compute_rank(i, scalars);
+        result[i] = compute_rank(i, scalars, tbs);
     return result;
 }
-
 
 } // namespace
 

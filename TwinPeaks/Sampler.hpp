@@ -31,8 +31,9 @@ class Sampler
         int num_particles;
         std::vector<T> particles;
 
-        // The particles' scalars and ranks
+        // The particles' scalars, tiebreakers, and ranks
         std::vector<std::tuple<double, double>> scalars;
+        std::vector<std::tuple<double, double>> tbs;
         std::vector<std::tuple<int, int>> ranks;
 
         // Distance along space filling curve
@@ -69,6 +70,7 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
 ,num_particles(_num_particles)
 ,particles(num_particles)
 ,scalars(num_particles)
+,tbs(num_particles)
 ,ranks(num_particles)
 ,dists(num_particles)
 ,dist_tiebreakers(num_particles)
@@ -81,6 +83,7 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
         particles[i].from_prior(rng);
         dist_tiebreakers[i] = rng.rand();
         scalars[i] = particles[i].get_scalars();
+        tbs[i] = {rng.rand(), rng.rand()};
     }
     compute_orderings();
     std::cout << "done." << std::endl;
@@ -90,7 +93,7 @@ template<typename T>
 void Sampler<T>::compute_orderings()
 {
     // Compute all ranks of all particles
-    ranks = compute_all_ranks(scalars);
+    ranks = compute_all_ranks(scalars, tbs);
 
     // Map ranks to total order
     std::vector<double> dists_plus_tiebreakers(num_particles);
@@ -129,6 +132,7 @@ void Sampler<T>::advance(RNG& rng)
     }while(num_particles > 1 && copy == worst);
     T new_particle = particles[copy];
     auto new_particle_scalars = scalars[copy];
+    auto new_particle_tbs = tbs[copy];
     double new_dist_tiebreaker = dist_tiebreakers[copy];
 
     // Now do Metropolis
@@ -136,21 +140,38 @@ void Sampler<T>::advance(RNG& rng)
     int accepted = 0;
     for(int i=0; i<mcmc_steps; ++i)
     {
-        // Make proposal (for both particle and tiebreaker value)
+        // Make proposal
+
+        // Particle
         auto proposal = new_particle;
         double logH = proposal.perturb(rng);
+
+        // Get its scalars
+        auto proposal_scalars = proposal.get_scalars();
+
+        // Propose tiebreakers
+        auto proposal_tbs = new_particle_tbs;
+        double u1, u2;
+        std::tie(u1, u2) = proposal_tbs;
+        double& u = (rng.rand() < 0.5)?(u1):(u2);
+        u += rng.randh();
+        wrap(u, 0.0, 1.0);
+        proposal_tbs = {u1, u2};
+
+        // Propose dist tiebreaker
         double proposal_dist_tiebreaker = new_dist_tiebreaker + rng.randh();
         wrap(proposal_dist_tiebreaker, 0.0, 1.0);
-        auto proposal_scalars = proposal.get_scalars();
 
         // Compute ranks
         int xr = 0;
         int yr = 0;
         for(int j=0; j<num_particles; ++j)
         {
-            if(std::get<0>(scalars[j]) <= std::get<0>(proposal_scalars))
+            if(leq(std::get<0>(scalars[j]), std::get<0>(proposal_scalars),
+                   std::get<0>(tbs[j]),     std::get<0>(proposal_tbs)))
                 ++xr;
-            if(std::get<1>(scalars[j]) <= std::get<1>(proposal_scalars))
+            if(leq(std::get<1>(scalars[j]), std::get<1>(proposal_scalars),
+                   std::get<1>(tbs[j]),     std::get<1>(proposal_tbs)))
                 ++yr;
         }
 
@@ -161,6 +182,7 @@ void Sampler<T>::advance(RNG& rng)
         {
             new_particle = proposal;
             new_particle_scalars = proposal_scalars;
+            new_particle_tbs = proposal_tbs;
             new_dist_tiebreaker = proposal_dist_tiebreaker;
             ++accepted;
         }
@@ -170,6 +192,7 @@ void Sampler<T>::advance(RNG& rng)
     // Insert new particle and recompute stuff
     particles[worst] = new_particle;
     scalars[worst] = new_particle_scalars;
+    tbs[worst] = new_particle_tbs;
 
     // Is this necessary? Could I just re-generate them all?
     dist_tiebreakers[worst] = new_dist_tiebreaker;
