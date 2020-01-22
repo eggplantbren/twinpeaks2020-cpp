@@ -1,6 +1,7 @@
 #ifndef TwinPeaks_Sampler_hpp
 #define TwinPeaks_Sampler_hpp
 
+#include <iostream>
 #include "RNG.hpp"
 #include <vector>
 
@@ -36,8 +37,12 @@ Sampler<T>::Sampler(int _num_particles, RNG& rng)
 :num_particles(_num_particles)
 ,particles(num_particles)
 {
+    // Generate particles from the prior.
+    std::cout << "Generating " << num_particles << ' ';
+    std::cout << "particles from the prior..." << std::flush;
     for(int i=0; i<num_particles; ++i)
         particles[i].from_prior(rng);
+    std::cout << "done." << std::endl;
 }
 
 } // namespace
