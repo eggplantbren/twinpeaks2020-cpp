@@ -27,6 +27,9 @@ class Sampler
         // Iteration counter
         int iteration;
 
+        // Validity flag - can the sampler be run?
+        bool valid;
+
         // The particles
         int num_particles;
         std::vector<T> particles;
@@ -50,7 +53,7 @@ class Sampler
         void write_output() const;
 
         // Do one NS iteration
-        void advance(RNG& rng);
+        void advance(RNG& rng, bool last_iteration=false);
 
     public:
 
@@ -70,6 +73,7 @@ class Sampler
 template<typename T>
 Sampler<T>::Sampler(int _num_particles, RNG& rng)
 :iteration(1)
+,valid(true)
 ,num_particles(_num_particles)
 ,particles(num_particles)
 ,scalars(num_particles)
@@ -118,14 +122,20 @@ void Sampler<T>::compute_orderings()
 template<typename T>
 void Sampler<T>::run_to_depth(double depth, RNG& rng)
 {
+    if(!valid)
+    {
+        std::cerr << "Cannot run sampler." << std::endl;
+        return;
+    }
     int iterations = static_cast<int>(num_particles*depth);
     for(int i=0; i<iterations; ++i)
-        advance(rng);
+        advance(rng, i==iterations-1);
+    valid = false;
 }
 
 
 template<typename T>
-void Sampler<T>::advance(RNG& rng)
+void Sampler<T>::advance(RNG& rng, bool last_iteration)
 {
     // Progress message
     std::cout << std::setprecision(12);
@@ -139,6 +149,8 @@ void Sampler<T>::advance(RNG& rng)
     std::cout << "done. ";
     std::cout << "Scalars = (" << std::get<0>(scalars[worst]) << ", ";
     std::cout << std::get<1>(scalars[worst]) << ")." << std::endl;
+    if(last_iteration)
+        return;
 
     std::cout << "    Generating replacement particle..." << std::flush;
     // Generate new particle
