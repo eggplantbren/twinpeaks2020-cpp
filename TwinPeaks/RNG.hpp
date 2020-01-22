@@ -2,6 +2,7 @@
 #define TwinPeaks_RNG_hpp
 
 #include <cmath>
+#include <ctime>
 #include <random>
 
 namespace TwinPeaks
@@ -25,7 +26,7 @@ class RNG
 
     public:
 
-        // Constructor
+        // Constructor that sets seed with the time
         RNG();
 
         // Constructor that also sets seed
@@ -61,7 +62,7 @@ RNG::RNG()
 :uniform(0.0, 1.0)
 ,normal (0.0, 1.0)
 {
-
+    set_seed(time(0));
 }
 
 RNG::RNG(unsigned int seed)
