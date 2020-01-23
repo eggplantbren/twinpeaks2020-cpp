@@ -13,6 +13,7 @@ class RunOptions
     private:
         int num_particles;
         int mcmc_steps;
+        int thin;
         double depth;
 
     public:
@@ -21,7 +22,8 @@ class RunOptions
         RunOptions(double _depth);
 
         // Specify everything
-        RunOptions(int _num_particles, int _mcmc_steps, double _depth);
+        RunOptions(int _num_particles, int _mcmc_steps,
+                   int _thin, double _depth);
 
         // Output to YAML file
         void save() const;
@@ -37,14 +39,17 @@ class RunOptions
 RunOptions::RunOptions(double _depth)
 :num_particles(1000)
 ,mcmc_steps(1000)
+,thin(1)
 ,depth(_depth)
 {
 
 }
 
-RunOptions::RunOptions(int _num_particles, int _mcmc_steps, double _depth)
+RunOptions::RunOptions(int _num_particles, int _mcmc_steps,
+                       int _thin, double _depth)
 :num_particles(_num_particles)
 ,mcmc_steps(_mcmc_steps)
+,thin(_thin)
 ,depth(_depth)
 {
 
