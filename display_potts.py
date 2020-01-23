@@ -14,3 +14,7 @@ for i in range(particles.shape[0]):
     plt.savefig(fname)
     print("Saved {fname}.".format(fname=fname))
 
+subprocess.run("ffmpeg -r 10 -i output/potts%06d.png " \
+                    + "-c:v libx264 -b:v 1000k output/potts.mp4",
+                shell=True)
+
