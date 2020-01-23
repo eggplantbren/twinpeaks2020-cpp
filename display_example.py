@@ -90,8 +90,8 @@ plt.imshow(est_logZ, origin="lower")
 plt.title("Estimated log(Z)")
 
 plt.subplot(2, 3, 3)
-plt.imshow((est_logZ - true_logZ)/est_H, origin="lower", cmap="coolwarm")
-plt.title("Resid/sqrt(estimated H)")
+plt.imshow(est_logZ - true_logZ, origin="lower", cmap="coolwarm")
+plt.title("Resid")
 
 plt.subplot(2, 3, 4)
 plt.imshow(true_H, origin="lower")
@@ -102,8 +102,8 @@ plt.imshow(est_H, origin="lower")
 plt.title("Estimated H")
 
 plt.subplot(2, 3, 6)
-plt.imshow((est_H - true_H)/est_H, origin="lower", cmap="coolwarm")
-plt.title("Resid/sqrt(estimated H)")
+plt.imshow(est_H - true_H, origin="lower", cmap="coolwarm")
+plt.title("Resid")
 
 
 
