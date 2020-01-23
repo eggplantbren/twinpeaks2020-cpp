@@ -92,8 +92,11 @@ void Potts::from_prior(RNG& rng)
 
             for(int k=0; k<4; ++k)
                 if(x[i][j] == x[ii[k]][jj[k]])
-                    score1++;
-            score2 += (i - j)*x[i][j];
+                    ++score1;
+
+            for(int k=2; k<4; ++k)
+                if(x[i][j] == x[ii[k]][jj[k]])
+                    ++score2;
         }
     }
 }
@@ -129,8 +132,10 @@ double Potts::perturb(RNG& rng)
         // Calculate negative part of delta score
         for(int k=0; k<4; ++k)
             if(x[i][j] == x[ii[k]][jj[k]])
-                score1--;
-        score2 -= (i - j)*x[i][j];
+                score1 -= 2;
+        for(int k=2; k<4; ++k)
+            if(x[i][j] == x[ii[k]][jj[k]])
+                score2 -= 2;
 
         // Perturb the cell
         int old = x[i][j];
@@ -142,8 +147,10 @@ double Potts::perturb(RNG& rng)
         // Calculate positive part of delta score
         for(int k=0; k<4; ++k)
             if(x[i][j] == x[ii[k]][jj[k]])
-                ++score1;
-        score2 += (i - j)*x[i][j];
+                score1 += 2;
+        for(int k=2; k<4; ++k)
+            if(x[i][j] == x[ii[k]][jj[k]])
+                score2 += 2;
     }
 
     return 0.0;
@@ -151,7 +158,7 @@ double Potts::perturb(RNG& rng)
 
 std::tuple<double, double> Potts::get_scalars() const
 {
-    return {score1, score2};
+    return {score1, score1};
 }
 
 std::string Potts::render() const
