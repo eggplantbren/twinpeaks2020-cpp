@@ -11,7 +11,7 @@ int main()
     RNG rng;
 
     // Create and run sampler
-    Sampler<Potts> sampler(RunOptions(100, 1000, 100, 1000.0), rng);
+    Sampler<Example> sampler(RunOptions(1000, 1000, 10, 100.0), rng);
     sampler.run(rng);
 
     return 0;
