@@ -16,6 +16,6 @@ for i in range(particles.shape[0]):
     print("Saved {fname}.".format(fname=fname))
 
 subprocess.run("ffmpeg -r 20 -i output/potts%06d.png " \
-                    + "-r 20 -c:v libx264 -b:v 1000k output/potts.mp4",
+                    + "-r 20 -c:v libx264 -b:v 10000k output/potts.mp4",
                 shell=True)
 
