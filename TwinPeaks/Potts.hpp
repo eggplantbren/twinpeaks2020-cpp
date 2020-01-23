@@ -68,10 +68,35 @@ void Potts::from_prior(RNG& rng)
         for(int j=0; j<size; ++j)
             x[i][j] = rng.rand_int(num_colors);
 
-    compute_score();
-    compute_scalars();
-}
+    score = 0;
+    score2 = 0;
 
+    // Coordinates of neighbouring cells
+    std::vector<int> ii(4); std::vector<int> jj(4);
+
+    for(int i=0; i<size; ++i)
+    {
+        for(int j=0; j<size; ++j)
+        {
+            for(int k=0; k<4; ++k)
+            {
+                ii[k] = i;
+                jj[k] = j;
+            }
+
+            // Down, up, right, left
+            ii[0] = TwinPeaks::mod(i + 1, size);
+            ii[1] = TwinPeaks::mod(i - 1, size);
+            jj[2] = TwinPeaks::mod(j + 1, size);
+            jj[3] = TwinPeaks::mod(j - 1, size);
+
+            for(int k=0; k<4; ++k)
+                if(x[i][j] == x[ii[k]][jj[k]])
+                    score++;
+            score2 += (i - j)*x[i][j];
+        }
+    }
+}
 
 double Potts::perturb(RNG& rng)
 {
