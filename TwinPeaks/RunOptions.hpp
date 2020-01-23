@@ -62,6 +62,7 @@ void RunOptions::save() const
     fout << "---\n";
     fout << "num_particles: " << num_particles << '\n';
     fout << "mcmc_steps: " << num_particles << '\n';
+    fout << "thin: " << thin << '\n';
     fout << "depth: " << depth << std::endl;
     fout.close();
 }

@@ -94,6 +94,9 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
     }
     compute_orderings();
     std::cout << "done." << std::endl;
+
+    // Save a record of the run options
+    run_options.save();
 }
 
 template<typename T>
