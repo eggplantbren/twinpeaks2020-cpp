@@ -27,7 +27,7 @@ class Potts
         std::vector<std::vector<int>> x;
 
         // So we can just update on the fly
-        int score;
+        int score1;
         int score2;
 
         void compute_score();
@@ -68,7 +68,7 @@ void Potts::from_prior(RNG& rng)
         for(int j=0; j<size; ++j)
             x[i][j] = rng.rand_int(num_colors);
 
-    score = 0;
+    score1 = 0;
     score2 = 0;
 
     // Coordinates of neighbouring cells
@@ -92,7 +92,7 @@ void Potts::from_prior(RNG& rng)
 
             for(int k=0; k<4; ++k)
                 if(x[i][j] == x[ii[k]][jj[k]])
-                    score++;
+                    score1++;
             score2 += (i - j)*x[i][j];
         }
     }
@@ -129,16 +129,20 @@ double Potts::perturb(RNG& rng)
         // Calculate negative part of delta score
         for(int k=0; k<4; ++k)
             if(x[i][j] == x[ii[k]][jj[k]])
-                score--;
+                score1--;
         score2 -= (i - j)*x[i][j];
 
         // Perturb the cell
-        x[i][j] = rng.rand_int(num_colors);
+        int old = x[i][j];
+        do
+        {
+            x[i][j] = rng.rand_int(num_colors);
+        }while(x[i][j] == old);
 
         // Calculate positive part of delta score
         for(int k=0; k<4; ++k)
             if(x[i][j] == x[ii[k]][jj[k]])
-                ++score;
+                ++score1;
         score2 += (i - j)*x[i][j];
     }
 
@@ -147,7 +151,7 @@ double Potts::perturb(RNG& rng)
 
 std::tuple<double, double> Potts::get_scalars() const
 {
-    return {score, score2};
+    return {score1, score2};
 }
 
 std::string Potts::render() const
