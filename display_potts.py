@@ -2,11 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 
-particles = np.loadtxt("output/particles.csv", delimiter=",")
-subprocess.run("rm output/potts*.png", shell=True)
+particles = np.atleast_2d(np.loadtxt("output/particles.csv", delimiter=","))
+subprocess.run("rm output/potts*", shell=True)
 
 for i in range(particles.shape[0]):
-    x = particles[i, 1:].reshape((32, 32))
+    size = int(np.sqrt(particles.shape[1] - 1))
+    x = particles[i, 1:].reshape((size, size))
     plt.clf()
     plt.imshow(x, interpolation='nearest')
     plt.title(str(i+1) + '/' + str(particles.shape[0]))
@@ -14,7 +15,7 @@ for i in range(particles.shape[0]):
     plt.savefig(fname)
     print("Saved {fname}.".format(fname=fname))
 
-subprocess.run("ffmpeg -r 10 -i output/potts%06d.png " \
-                    + "-c:v libx264 -b:v 1000k output/potts.mp4",
+subprocess.run("ffmpeg -r 20 -i output/potts%06d.png " \
+                    + "-r 20 -c:v libx264 -b:v 1000k output/potts.mp4",
                 shell=True)
 

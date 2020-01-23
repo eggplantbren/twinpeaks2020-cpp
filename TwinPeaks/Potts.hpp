@@ -158,7 +158,7 @@ double Potts::perturb(RNG& rng)
 
 std::tuple<double, double> Potts::get_scalars() const
 {
-    return {score1, score1};
+    return {score1, score2};
 }
 
 std::string Potts::render() const
