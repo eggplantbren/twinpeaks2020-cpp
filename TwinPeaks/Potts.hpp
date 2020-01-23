@@ -102,7 +102,7 @@ double Potts::perturb(RNG& rng)
 {
     int reps = 1;
     if(rng.rand() <= 0.5)
-        reps += 1 + rng.rand_int(9);
+        reps = (int)pow(size*size, rng.rand());
 
     // Which cell is being perturbed
     int i, j;
