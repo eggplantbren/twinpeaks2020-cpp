@@ -90,7 +90,10 @@ plt.imshow(est_logZ, origin="lower")
 plt.title("Estimated log(Z)")
 
 plt.subplot(2, 3, 3)
-plt.imshow(est_logZ - true_logZ, origin="lower", cmap="coolwarm")
+resid = est_logZ - true_logZ
+biggest = np.max(np.abs(resid))
+plt.imshow(resid, origin="lower", cmap="coolwarm",
+            vmin=-biggest, vmax=biggest)
 plt.title("Resid")
 
 plt.subplot(2, 3, 4)
@@ -102,7 +105,10 @@ plt.imshow(est_H, origin="lower")
 plt.title("Estimated H")
 
 plt.subplot(2, 3, 6)
-plt.imshow(est_H - true_H, origin="lower", cmap="coolwarm")
+resid = est_H - true_H
+biggest = np.max(np.abs(resid))
+plt.imshow(resid, origin="lower", cmap="coolwarm",
+            vmin=-biggest, vmax=biggest)
 plt.title("Resid")
 
 
