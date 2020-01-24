@@ -94,7 +94,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         tbs[i] = {rng.rand(), rng.rand()};
     }
     compute_orderings();
-    std::cout << "done." << std::endl;
+    std::cout << "done.\n" << std::endl;
 
     // Save a record of the run options
     run_options.save();
