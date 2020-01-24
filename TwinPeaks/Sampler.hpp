@@ -68,6 +68,7 @@ class Sampler
         void run(RNG& rng);
 };
 
+
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
@@ -98,6 +99,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
     // Save a record of the run options
     run_options.save();
 }
+
 
 template<typename T>
 void Sampler<T>::compute_orderings()
@@ -139,25 +141,39 @@ void Sampler<T>::run(RNG& rng)
 }
 
 
+
 template<typename T>
 void Sampler<T>::advance(RNG& rng, bool last_iteration)
 {
-    // Progress message
-    std::cout << std::setprecision(12);
-    std::cout << "Iteration " << iteration << ". ";
-    std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.";
-    std::cout << std::endl;
+    bool output_message = run_options.num_particles <= 100 ||
+                                iteration % run_options.num_particles == 0;
 
+    // Progress message
+    if(output_message)
+    {
+        std::cout << std::setprecision(12);
+        std::cout << "Iteration " << iteration << ". ";
+        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.";
+        std::cout << std::endl;
+    }
     // Save worst particle
-    std::cout << "    Saving worst particle..." << std::flush;
+    if(output_message)
+        std::cout << "    Saving worst particle..." << std::flush;
     write_output();
-    std::cout << "done. ";
-    std::cout << "Scalars = (" << std::get<0>(scalars[worst]) << ", ";
-    std::cout << std::get<1>(scalars[worst]) << ")." << std::endl;
+
+    if(output_message)
+    {
+        std::cout << "done. ";
+        std::cout << "Scalars = (" << std::get<0>(scalars[worst]) << ", ";
+        std::cout << std::get<1>(scalars[worst]) << ")." << std::endl;
+    }
+
     if(last_iteration)
         return;
 
-    std::cout << "    Generating replacement particle..." << std::flush;
+    if(output_message)
+        std::cout << "    Generating replacement particle..." << std::flush;
+
     // Generate new particle
     // First, clone
     int copy = 0;
@@ -230,18 +246,28 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
     // Is this necessary? Could I just re-generate them all?
     dist_tiebreakers[worst] = new_dist_tiebreaker;
-    std::cout << "done. ";
-    std::cout << "Metropolis acceptance rate = ";
-    std::cout << accepted << '/' << run_options.mcmc_steps << '.' << std::endl;
+
+    if(output_message)
+    {
+        std::cout << "done. ";
+        std::cout << "Metropolis acceptance rate = ";
+        std::cout << accepted << '/' << run_options.mcmc_steps << '.' << std::endl;
+    }
 
     // Compute new orderings.
-    std::cout << "    Computing new orderings..." << std::flush;
+    if(output_message)
+        std::cout << "    Computing new orderings..." << std::flush;
+
     compute_orderings();
-    std::cout << "done." << std::endl;
+
+    if(output_message)
+        std::cout << "done." << std::endl;
 
     // Increment iteration counter
     ++iteration;
-    std::cout << std::endl;
+
+    if(output_message)
+        std::cout << std::endl;
 }
 
 
