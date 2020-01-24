@@ -1,7 +1,7 @@
 CXX = g++
 FLAGS = -std=c++17
 INCLUDE = -I .
-OPTIM = -O2 -g
+OPTIM = -O3 -march=native
 WARN = -Wall -Wextra -pedantic
 ALL = $(FLAGS) $(INCLUDE) $(OPTIM) $(WARN)
 
