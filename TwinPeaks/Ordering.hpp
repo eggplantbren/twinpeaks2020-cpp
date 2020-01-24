@@ -1,6 +1,7 @@
 #ifndef TwinPeaks_Ordering_hpp
 #define TwinPeaks_Ordering_hpp
 
+#include <iostream>
 #include <tuple>
 #include <vector>
 
@@ -14,6 +15,9 @@ namespace TwinPeaks
 */
 
 int ranks_to_total_order(int x_rank, int y_rank);
+
+/* Test function for the above */
+void test_ranks_to_total_order();
 
 // Less than or equal to, with a tiebreaker
 bool leq(double scalar1, double scalar2, double tb1, double tb2);
@@ -75,6 +79,19 @@ int ranks_to_total_order(int x_rank, int y_rank)
         result += y_rank;
 
     return result;
+}
+
+/* Test function for the above */
+void test_ranks_to_total_order()
+{
+    for(int i=1; i<=100; ++i)
+    {
+        for(int j=1; j<=100; ++j)
+        {
+            std::cout << i << ' ' << j << ' ' << ranks_to_total_order(i, j);
+            std::cout << std::endl; 
+        }
+    }
 }
 
 
