@@ -66,8 +66,7 @@ int ranks_to_total_order(int x_rank, int y_rank)
     int tot = x_rank + y_rank;
 
     // Segments prior to the one we're on
-    for(int i=0; i<tot; ++i)
-        result += i;
+    result += (tot-1)*tot/2;
 
     // Horizontal or vertical segments
     result += tot;
