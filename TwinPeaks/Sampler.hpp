@@ -37,6 +37,7 @@ class Sampler
         // The particles' scalars, tiebreakers, and ranks
         std::vector<double> xs, ys;
         std::vector<int> x_ranks, y_ranks;
+        bool flip;
 
         // Positions along space filling curve
         std::vector<double> ds;
@@ -79,6 +80,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,ys(run_options.num_particles)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
+,flip(false)
 ,ds(run_options.num_particles)
 {
     // Generate particles from the prior.
@@ -90,6 +92,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         auto scalars = particles[i].get_scalars();
         std::tie(xs[i], ys[i]) = scalars;
     }
+    flip = rng.rand() <= 0.5;
     compute_orderings();
     std::cout << "done.\n" << std::endl;
 
@@ -107,7 +110,12 @@ void Sampler<T>::compute_orderings()
 
     // Map ranks to total order
     for(int i=0; i<run_options.num_particles; ++i)
-        ds[i] = d(x_ranks[i], y_ranks[i], true);
+    {
+        if(flip)
+            ds[i] = d(y_ranks[i], x_ranks[i], true);
+        else
+            ds[i] = d(x_ranks[i], y_ranks[i], true);
+    }
 
     // Find worst particle
     worst = 0;
@@ -145,7 +153,17 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     {
         std::cout << std::setprecision(12);
         std::cout << "Iteration " << iteration << ". ";
-        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.";
+        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.  ";
+        std::cout << "Standard deviation of sum of ranks = ";
+        double tot = 0.0;
+        double tot_sq = 0.0;
+        int n = run_options.num_particles;
+        for(int i=0; i<n; ++i)
+        {
+            tot += (x_ranks[i] + y_ranks[i]);
+            tot_sq += pow(x_ranks[i] + y_ranks[i], 2);
+        }
+        std::cout << sqrt(tot_sq/n - pow(tot/n, 2)) << '.';
         std::cout << std::endl;
     }
     // Save worst particle
@@ -202,7 +220,12 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
                 ++yr;
         }
 
-        int proposal_d = d(xr, yr);
+        double proposal_d;
+        if(flip)
+            proposal_d = d(yr, xr);
+        else
+            proposal_d = d(xr, yr);
+
         if((proposal_d >= ds[worst]) && 
            (rng.rand() <= exp(logH)))
         {
@@ -230,6 +253,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(output_message)
         std::cout << "    Computing new orderings..." << std::flush;
 
+    flip = rng.rand() <= 0.5;
     compute_orderings();
 
     if(output_message)
