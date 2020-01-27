@@ -7,6 +7,7 @@ using namespace TwinPeaks;
 
 int main()
 {
+//    test_d(3);
     // Create RNG
     RNG rng;
 

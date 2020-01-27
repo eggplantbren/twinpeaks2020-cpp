@@ -38,8 +38,8 @@ class Sampler
         std::vector<double> xs, ys;
         std::vector<int> x_ranks, y_ranks;
 
-        // Distance along space filling curve
-        std::vector<int> dists;
+        // Positions along space filling curve
+        std::vector<double> ds;
 
         // Index of worst particle
         int worst;
@@ -79,7 +79,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,ys(run_options.num_particles)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
-,dists(run_options.num_particles)
+,ds(run_options.num_particles)
 {
     // Generate particles from the prior.
     std::cout << "Generating " << run_options.num_particles << ' ';
@@ -104,20 +104,15 @@ void Sampler<T>::compute_orderings()
     // Ranks of all particles
     x_ranks = compute_ranks(xs);
     y_ranks = compute_ranks(ys);
-    for(int i=0; i<run_options.num_particles; ++i)
-    {
-        ++x_ranks[i];
-        ++y_ranks[i];
-    }
 
     // Map ranks to total order
     for(int i=0; i<run_options.num_particles; ++i)
-        dists[i] = ranks_to_total_order(x_ranks[i], y_ranks[i]);
+        ds[i] = d(x_ranks[i], y_ranks[i], true);
 
     // Find worst particle
     worst = 0;
     for(int i=1; i<run_options.num_particles; ++i)
-        if(dists[i] < dists[worst])
+        if(ds[i] < ds[worst])
             worst = i;
 }
 
@@ -207,8 +202,8 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
                 ++yr;
         }
 
-        int proposal_dist = ranks_to_total_order(xr, yr);
-        if((proposal_dist >= dists[worst]) && 
+        int proposal_d = d(xr, yr);
+        if((proposal_d >= ds[worst]) && 
            (rng.rand() <= exp(logH)))
         {
             new_particle = proposal;
