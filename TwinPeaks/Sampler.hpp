@@ -35,13 +35,11 @@ class Sampler
         std::vector<T> particles;
 
         // The particles' scalars, tiebreakers, and ranks
-        std::vector<std::tuple<double, double>> scalars;
-        std::vector<std::tuple<double, double>> tbs;
-        std::vector<std::tuple<int, int>> ranks;
+        std::vector<double> xs, ys;
+        std::vector<int> x_ranks, y_ranks;
 
         // Distance along space filling curve
         std::vector<int> dists;
-        std::vector<double> dist_tiebreakers;
 
         // Index of worst particle
         int worst;
@@ -77,11 +75,11 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,iteration(1)
 ,valid(true)
 ,particles(run_options.num_particles)
-,scalars(run_options.num_particles)
-,tbs(run_options.num_particles)
-,ranks(run_options.num_particles)
+,xs(run_options.num_particles)
+,ys(run_options.num_particles)
+,x_ranks(run_options.num_particles)
+,y_ranks(run_options.num_particles)
 ,dists(run_options.num_particles)
-,dist_tiebreakers(run_options.num_particles)
 {
     // Generate particles from the prior.
     std::cout << "Generating " << run_options.num_particles << ' ';
@@ -89,9 +87,8 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
     for(int i=0; i<run_options.num_particles; ++i)
     {
         particles[i].from_prior(rng);
-        dist_tiebreakers[i] = rng.rand();
-        scalars[i] = particles[i].get_scalars();
-        tbs[i] = {rng.rand(), rng.rand()};
+        auto scalars = particles[i].get_scalars();
+        std::tie(xs[i], ys[i]) = scalars;
     }
     compute_orderings();
     std::cout << "done.\n" << std::endl;
@@ -104,23 +101,23 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 template<typename T>
 void Sampler<T>::compute_orderings()
 {
-    // Compute all ranks of all particles
-    ranks = compute_all_ranks(scalars, tbs);
-
-    // Map ranks to total order
-    std::vector<double> dists_plus_tiebreakers(run_options.num_particles);
+    // Ranks of all particles
+    x_ranks = compute_ranks(xs);
+    y_ranks = compute_ranks(ys);
     for(int i=0; i<run_options.num_particles; ++i)
     {
-        int x_rank, y_rank;
-        std::tie(x_rank, y_rank) = ranks[i];
-        dists[i] = ranks_to_total_order(x_rank, y_rank);
-        dists_plus_tiebreakers[i] = dists[i] + dist_tiebreakers[i];
+        ++x_ranks[i];
+        ++y_ranks[i];
     }
+
+    // Map ranks to total order
+    for(int i=0; i<run_options.num_particles; ++i)
+        dists[i] = ranks_to_total_order(x_ranks[i], y_ranks[i]);
 
     // Find worst particle
     worst = 0;
     for(int i=1; i<run_options.num_particles; ++i)
-        if(dists_plus_tiebreakers[i] < dists_plus_tiebreakers[worst])
+        if(dists[i] < dists[worst])
             worst = i;
 }
 
@@ -164,8 +161,8 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(output_message)
     {
         std::cout << "done. ";
-        std::cout << "Scalars = (" << std::get<0>(scalars[worst]) << ", ";
-        std::cout << std::get<1>(scalars[worst]) << ")." << std::endl;
+        std::cout << "Scalars = (" << xs[worst] << ", ";
+        std::cout << ys[worst] << ")." << std::endl;
     }
 
     if(last_iteration)
@@ -182,9 +179,8 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         copy = rng.rand_int(run_options.num_particles);
     }while(run_options.num_particles > 1 && copy == worst);
     T new_particle = particles[copy];
-    auto new_particle_scalars = scalars[copy];
-    auto new_particle_tbs = tbs[copy];
-    double new_dist_tiebreaker = dist_tiebreakers[copy];
+    double new_x = xs[copy];
+    double new_y = ys[copy];
 
     // Now do Metropolis
     int accepted = 0;
@@ -197,43 +193,27 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         double logH = proposal.perturb(rng);
 
         // Get its scalars
-        auto proposal_scalars = proposal.get_scalars();
-
-        // Propose tiebreakers
-        auto proposal_tbs = new_particle_tbs;
-        double u1, u2;
-        std::tie(u1, u2) = proposal_tbs;
-        double& u = (rng.rand() < 0.5)?(u1):(u2);
-        u += rng.randh();
-        wrap(u, 0.0, 1.0);
-        proposal_tbs = {u1, u2};
-
-        // Propose dist tiebreaker
-        double proposal_dist_tiebreaker = new_dist_tiebreaker + rng.randh();
-        wrap(proposal_dist_tiebreaker, 0.0, 1.0);
+        double proposal_x, proposal_y;
+        std::tie(proposal_x, proposal_y) = proposal.get_scalars();
 
         // Compute ranks
         int xr = 0;
         int yr = 0;
         for(int j=0; j<run_options.num_particles; ++j)
         {
-            if(leq(std::get<0>(scalars[j]), std::get<0>(proposal_scalars),
-                   std::get<0>(tbs[j]),     std::get<0>(proposal_tbs)))
+            if(xs[j] < proposal_x)
                 ++xr;
-            if(leq(std::get<1>(scalars[j]), std::get<1>(proposal_scalars),
-                   std::get<1>(tbs[j]),     std::get<1>(proposal_tbs)))
+            if(ys[j] < proposal_y)
                 ++yr;
         }
 
         int proposal_dist = ranks_to_total_order(xr, yr);
-        if((proposal_dist + proposal_dist_tiebreaker >=
-            dists[worst] + dist_tiebreakers[worst]) && 
+        if((proposal_dist >= dists[worst]) && 
            (rng.rand() <= exp(logH)))
         {
             new_particle = proposal;
-            new_particle_scalars = proposal_scalars;
-            new_particle_tbs = proposal_tbs;
-            new_dist_tiebreaker = proposal_dist_tiebreaker;
+            new_x = proposal_x;
+            new_y = proposal_y;
             ++accepted;
         }
 
@@ -241,11 +221,8 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
     // Insert new particle and recompute stuff
     particles[worst] = new_particle;
-    scalars[worst] = new_particle_scalars;
-    tbs[worst] = new_particle_tbs;
-
-    // Is this necessary? Could I just re-generate them all?
-    dist_tiebreakers[worst] = new_dist_tiebreaker;
+    xs[worst] = new_x;
+    ys[worst] = new_y;
 
     if(output_message)
     {
@@ -286,12 +263,11 @@ void Sampler<T>::write_output() const
 
     // Output scalars
     fout << iteration << ',';
-    fout << std::get<0>(scalars[worst]) << ',';
-    fout << std::get<1>(scalars[worst]) << std::endl;
+    fout << xs[worst] << ',';
+    fout << ys[worst] << std::endl;
 
     // Close the output file
     fout.close();
-
 
     // Now output entire particle
     if(iteration % run_options.thin != 0)
