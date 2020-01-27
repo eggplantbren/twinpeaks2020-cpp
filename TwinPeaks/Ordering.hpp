@@ -56,6 +56,28 @@ double d(int ix, int iy, bool corner)
     else
         result += iy;
 
+// Alternative that pushes away from the diagonals, didn't seem to help
+//    // Off diagonal part
+//    int off_diag_dist;
+//    if(iy == ix)
+//        off_diag_dist = 0;
+//    if(tot % 2 == 0)
+//    {
+//        // Even tot
+//        off_diag_dist += std::abs(iy - ix);
+//        if(iy < ix)
+//            --off_diag_dist;
+//    }
+//    else
+//    {
+//        // Odd tot
+//        off_diag_dist += std::abs(iy - ix);
+//        if(iy < ix)
+//            --off_diag_dist;
+//    }
+//    result += off_diag_dist;
+
+
     return result;
 }
 
