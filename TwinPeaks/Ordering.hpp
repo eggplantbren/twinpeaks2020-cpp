@@ -15,10 +15,10 @@ namespace TwinPeaks
 * (distance along that path)
 */
 
-int ranks_to_total_order(int x_rank, int y_rank);
+double d(int ix, int iy, bool corner=false);
 
 /* Test function for the above */
-void test_ranks_to_total_order();
+void test_d();
 
 
 /*
@@ -34,36 +34,46 @@ std::vector<int> compute_ranks(const std::vector<double>& values);
 * (distance along that path)
 */
 
-int ranks_to_total_order(int x_rank, int y_rank)
+double d(int ix, int iy, bool corner)
 {
-    int result = 0;
-    int tot = x_rank + y_rank;
+    if(corner)
+        return 0.5*(d(ix+1, iy) + d(ix, iy+1));
+
+    /****** ELSE ******/
+
+    double result = 0.0;
+    int tot = ix + iy;
 
     // Segments prior to the one we're on
-    result += (tot-1)*tot/2;
+    result += 0.5*tot*(tot - 1);
 
     // Horizontal or vertical segments
     result += tot;
 
     // Odd/even
     if(tot % 2 == 0)
-        result += x_rank;
+        result += ix;
     else
-        result += y_rank;
+        result += iy;
 
     return result;
 }
 
 /* Test function for the above */
-void test_ranks_to_total_order()
+void test_d(int num_particles)
 {
-    for(int i=1; i<=100; ++i)
+    for(int iy=num_particles; iy>=0; --iy)
     {
-        for(int j=1; j<=100; ++j)
-        {
-            std::cout << i << ' ' << j << ' ' << ranks_to_total_order(i, j);
-            std::cout << std::endl; 
-        }
+        for(int ix=0; ix<=num_particles; ++ix)
+            std::cout << d(ix, iy) << ' ';
+        std::cout << std::endl; 
+    }
+    std::cout << std::endl;
+    for(int iy=num_particles-1; iy>=0; --iy)
+    {
+        for(int ix=0; ix<num_particles; ++ix)
+            std::cout << d(ix, iy, true) << ' ';
+        std::cout << std::endl; 
     }
 }
 
