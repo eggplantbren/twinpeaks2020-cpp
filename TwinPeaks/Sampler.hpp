@@ -37,7 +37,6 @@ class Sampler
         // The particles' scalars, tiebreakers, and ranks
         std::vector<double> xs, ys;
         std::vector<int> x_ranks, y_ranks;
-        bool flip;
 
         // Positions along space filling curve
         std::vector<double> ds;
@@ -80,7 +79,6 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,ys(run_options.num_particles)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
-,flip(false)
 ,ds(run_options.num_particles)
 {
     // Generate particles from the prior.
@@ -92,7 +90,6 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         auto scalars = particles[i].get_scalars();
         std::tie(xs[i], ys[i]) = scalars;
     }
-    flip = rng.rand() <= 0.5;
     compute_orderings();
     std::cout << "done.\n" << std::endl;
 
@@ -110,12 +107,7 @@ void Sampler<T>::compute_orderings()
 
     // Map ranks to total order
     for(int i=0; i<run_options.num_particles; ++i)
-    {
-        if(flip)
-            ds[i] = d(y_ranks[i], x_ranks[i], true);
-        else
-            ds[i] = d(x_ranks[i], y_ranks[i], true);
-    }
+        ds[i] = d(x_ranks[i], y_ranks[i], true);
 
     // Find worst particle
     worst = 0;
@@ -220,13 +212,9 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
                 ++yr;
         }
 
-        double proposal_d;
-        if(flip)
-            proposal_d = d(yr, xr);
-        else
-            proposal_d = d(xr, yr);
+        double proposal_d = d(xr, yr);
 
-        if((proposal_d >= ds[worst]) && 
+        if((proposal_d > ds[worst]) &&
            (rng.rand() <= exp(logH)))
         {
             new_particle = proposal;
@@ -253,7 +241,6 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(output_message)
         std::cout << "    Computing new orderings..." << std::flush;
 
-    flip = rng.rand() <= 0.5;
     compute_orderings();
 
     if(output_message)
