@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include "Misc.hpp"
 #include "Ordering.hpp"
 #include <ostream>
@@ -40,6 +41,10 @@ class Sampler
 
         // Positions along space filling curve
         std::vector<double> ds;
+
+        // Forbidden rectangles
+        std::list<double> forbidden_xs;
+        std::list<double> forbidden_ys;
 
         // Index of worst particle
         int worst;
@@ -80,6 +85,8 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
 ,ds(run_options.num_particles)
+,forbidden_xs()
+,forbidden_ys()
 {
     // Generate particles from the prior.
     std::cout << "Generating " << run_options.num_particles << ' ';
