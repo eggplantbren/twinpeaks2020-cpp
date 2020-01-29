@@ -197,7 +197,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     {
         std::cout << std::setprecision(12);
         std::cout << "# Iteration " << iteration << ". ";
-        std::cout << "# Depth ~= " << (double)iteration/run_options.num_particles << " nats.\n";
+        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.\n";
         std::cout << "# Standard deviation of sum of ranks = ";
         double tot = 0.0;
         double tot_sq = 0.0;
