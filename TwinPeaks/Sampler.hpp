@@ -46,6 +46,7 @@ class Sampler
         // Forbidden rectangles
         std::list<double> forbidden_xs;
         std::list<double> forbidden_ys;
+        void add_forbidden_rectangle(double x, double y);
 
         // Index of worst particle
         int worst;
@@ -161,6 +162,29 @@ double Sampler<T>::test(double x, double y) const
 }
 
 
+template<typename T>
+void Sampler<T>::add_forbidden_rectangle(double x, double y)
+{
+    // First, prune redundant old rectangles
+    auto it1 = forbidden_xs.begin();
+    auto it2 = forbidden_ys.begin();
+    while(it1 != forbidden_xs.end() && it2 != forbidden_ys.end())
+    {
+        if(x >= *it1 && y >= *it2)
+        {
+            it1 = forbidden_xs.erase(it1);
+            it2 = forbidden_ys.erase(it2);
+        }
+
+        ++it1;
+        ++it2;
+    }
+
+    forbidden_xs.push_front(x);
+    forbidden_ys.push_front(y);
+}
+
+
 
 template<typename T>
 void Sampler<T>::advance(RNG& rng, bool last_iteration)
@@ -173,7 +197,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     {
         std::cout << std::setprecision(12);
         std::cout << "# Iteration " << iteration << ". ";
-        std::cout << "# Depth ~= " << (double)iteration/run_options.num_particles << " nats.  ";
+        std::cout << "# Depth ~= " << (double)iteration/run_options.num_particles << " nats.\n";
         std::cout << "# Standard deviation of sum of ranks = ";
         double tot = 0.0;
         double tot_sq = 0.0;
@@ -185,6 +209,9 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         }
         std::cout << sqrt(tot_sq/n - pow(tot/n, 2)) << '.';
         std::cout << std::endl;
+
+        std::cout << "# Number of forbidden rectangles = ";
+        std::cout << forbidden_xs.size() << "." << std::endl;
     }
     // Save worst particle
     if(output_message)
@@ -211,10 +238,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
                 break;
 
             if(d(ix+1, iy) > ds[worst])
-            {
-                forbidden_xs.push_front(xs[x_indices[ix]]);
-                forbidden_ys.push_front(ys[y_indices[iy]]);
-            }
+                add_forbidden_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
         }
 
         if(ix == 0)
@@ -274,7 +298,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
     // Compute new orderings.
     if(output_message)
-        std::cout << "    Computing new orderings..." << std::flush;
+        std::cout << "#    Computing new orderings..." << std::flush;
 
     compute_orderings();
 
@@ -285,7 +309,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     ++iteration;
 
     if(output_message)
-        std::cout << std::endl;
+        std::cout << '#' << std::endl;
 }
 
 
