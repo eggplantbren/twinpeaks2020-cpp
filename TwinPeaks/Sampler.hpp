@@ -1,10 +1,10 @@
 #ifndef TwinPeaks_Sampler_hpp
 #define TwinPeaks_Sampler_hpp
 
+#include "Constraints.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <list>
 #include "Misc.hpp"
 #include "Ordering.hpp"
 #include <ostream>
@@ -44,9 +44,7 @@ class Sampler
         std::vector<double> ds;
 
         // Forbidden rectangles
-        std::list<double> forbidden_xs;
-        std::list<double> forbidden_ys;
-        void add_forbidden_rectangle(double x, double y);
+        Constraints constraints;
 
         // Index of worst particle
         int worst;
@@ -59,9 +57,6 @@ class Sampler
 
         // Do one NS iteration
         void advance(RNG& rng, bool last_iteration=false);
-
-        // Test a position wrt the forbidden rectangles
-        double test(double x, double y) const;
 
     public:
 
@@ -92,8 +87,6 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
 ,ds(run_options.num_particles)
-,forbidden_xs()
-,forbidden_ys()
 {
     // Generate particles from the prior.
     std::cout << "# Generating " << run_options.num_particles << ' ';
@@ -146,45 +139,6 @@ void Sampler<T>::run(RNG& rng)
     valid = false;
 }
 
-template<typename T>
-double Sampler<T>::test(double x, double y) const
-{
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
-    {
-        if(x < *it1 && y < *it2)
-            return false;
-        ++it1;
-        ++it2;
-    }
-    return true;
-}
-
-
-template<typename T>
-void Sampler<T>::add_forbidden_rectangle(double x, double y)
-{
-    // First, prune redundant old rectangles
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_ys.end())
-    {
-        if(x >= *it1 && y >= *it2)
-        {
-            it1 = forbidden_xs.erase(it1);
-            it2 = forbidden_ys.erase(it2);
-        }
-
-        ++it1;
-        ++it2;
-    }
-
-    forbidden_xs.push_front(x);
-    forbidden_ys.push_front(y);
-}
-
-
 
 template<typename T>
 void Sampler<T>::advance(RNG& rng, bool last_iteration)
@@ -211,7 +165,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::cout << std::endl;
 
         std::cout << "# Number of forbidden rectangles = ";
-        std::cout << forbidden_xs.size() << "." << std::endl;
+        std::cout << constraints.size() << "." << std::endl;
     }
     // Save worst particle
     if(output_message)
@@ -238,7 +192,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
                 break;
 
             if(d(ix+1, iy) > ds[worst])
-                add_forbidden_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
+                constraints.add_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
         }
 
         if(ix == 0)
@@ -273,7 +227,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         double proposal_x, proposal_y;
         std::tie(proposal_x, proposal_y) = proposal.get_scalars();
 
-        if(test(proposal_x, proposal_y) &&
+        if(constraints.test(proposal_x, proposal_y) &&
            (rng.rand() <= exp(logH)))
         {
             new_particle = proposal;
