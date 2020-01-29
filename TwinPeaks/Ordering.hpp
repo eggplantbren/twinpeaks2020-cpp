@@ -24,7 +24,8 @@ void test_d();
 /*
 * Compute ranks of all scalars with respect to the whole collection.
 */
-std::vector<int> compute_ranks(const std::vector<double>& values);
+std::tuple<std::vector<int>, std::vector<int>>
+        indices_and_ranks(const std::vector<double>& values);
 
 /* IMPLEMENTATIONS FOLLOW */
 
@@ -37,7 +38,7 @@ std::vector<int> compute_ranks(const std::vector<double>& values);
 double d(int ix, int iy, bool corner)
 {
     if(corner)
-        return 0.5*(d(ix+1, iy) + d(ix, iy+1));
+        return 0.5*(d(ix, iy) + d(ix+1, iy+1));
 
     /****** ELSE ******/
 
@@ -50,32 +51,25 @@ double d(int ix, int iy, bool corner)
     // Horizontal or vertical segments
     result += tot;
 
-    // Odd/even
+    // Version that pushes away from diagonals
+    int off_diag_dist;
+    if(iy == ix)
+        off_diag_dist = 0;
     if(tot % 2 == 0)
-        result += ix;
+    {
+        // Even tot
+        off_diag_dist += std::abs(iy - ix);
+        if(iy < ix)
+            --off_diag_dist;
+    }
     else
-        result += iy;
-
-// Alternative that pushes away from the diagonals, didn't seem to help
-//    // Off diagonal part
-//    int off_diag_dist;
-//    if(iy == ix)
-//        off_diag_dist = 0;
-//    if(tot % 2 == 0)
-//    {
-//        // Even tot
-//        off_diag_dist += std::abs(iy - ix);
-//        if(iy < ix)
-//            --off_diag_dist;
-//    }
-//    else
-//    {
-//        // Odd tot
-//        off_diag_dist += std::abs(iy - ix);
-//        if(iy < ix)
-//            --off_diag_dist;
-//    }
-//    result += off_diag_dist;
+    {
+        // Odd tot
+        off_diag_dist += std::abs(iy - ix);
+        if(iy < ix)
+            --off_diag_dist;
+    }
+    result += off_diag_dist;
 
 
     return result;
@@ -104,7 +98,8 @@ void test_d(int num_particles)
 /*
 * Compute ranks of all scalars with respect to the whole collection.
 */
-std::vector<int> compute_ranks(const std::vector<double>& values)
+std::tuple<std::vector<int>, std::vector<int>>
+        indices_and_ranks(const std::vector<double>& values)
 {
     std::vector<int> indices(values.size());
     for(size_t i=0; i<values.size(); ++i)
@@ -118,7 +113,7 @@ std::vector<int> compute_ranks(const std::vector<double>& values)
     for(size_t i=0; i<values.size(); ++i)
         result[indices[i]] = i;
 
-    return result;
+    return {indices, result};
 }
 
 

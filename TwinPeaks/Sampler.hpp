@@ -37,6 +37,7 @@ class Sampler
 
         // The particles' scalars, tiebreakers, and ranks
         std::vector<double> xs, ys;
+        std::vector<int> x_indices, y_indices;
         std::vector<int> x_ranks, y_ranks;
 
         // Positions along space filling curve
@@ -57,6 +58,9 @@ class Sampler
 
         // Do one NS iteration
         void advance(RNG& rng, bool last_iteration=false);
+
+        // Test a position wrt the forbidden rectangles
+        double test(double x, double y) const;
 
     public:
 
@@ -82,6 +86,8 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,particles(run_options.num_particles)
 ,xs(run_options.num_particles)
 ,ys(run_options.num_particles)
+,x_indices(run_options.num_particles)
+,y_indices(run_options.num_particles)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
 ,ds(run_options.num_particles)
@@ -89,7 +95,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,forbidden_ys()
 {
     // Generate particles from the prior.
-    std::cout << "Generating " << run_options.num_particles << ' ';
+    std::cout << "# Generating " << run_options.num_particles << ' ';
     std::cout << "particles from the prior..." << std::flush;
     for(int i=0; i<run_options.num_particles; ++i)
     {
@@ -98,7 +104,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         std::tie(xs[i], ys[i]) = scalars;
     }
     compute_orderings();
-    std::cout << "done.\n" << std::endl;
+    std::cout << "done.\n#" << std::endl;
 
     // Save a record of the run options
     run_options.save();
@@ -109,8 +115,8 @@ template<typename T>
 void Sampler<T>::compute_orderings()
 {
     // Ranks of all particles
-    x_ranks = compute_ranks(xs);
-    y_ranks = compute_ranks(ys);
+    std::tie(x_indices, x_ranks) = indices_and_ranks(xs);
+    std::tie(y_indices, y_ranks) = indices_and_ranks(ys);
 
     // Map ranks to total order
     for(int i=0; i<run_options.num_particles; ++i)
@@ -139,6 +145,21 @@ void Sampler<T>::run(RNG& rng)
     valid = false;
 }
 
+template<typename T>
+double Sampler<T>::test(double x, double y) const
+{
+    auto it1 = forbidden_xs.begin();
+    auto it2 = forbidden_ys.begin();
+    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
+    {
+        if(x < *it1 && y < *it2)
+            return false;
+        ++it1;
+        ++it2;
+    }
+    return true;
+}
+
 
 
 template<typename T>
@@ -151,9 +172,9 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(output_message)
     {
         std::cout << std::setprecision(12);
-        std::cout << "Iteration " << iteration << ". ";
-        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.  ";
-        std::cout << "Standard deviation of sum of ranks = ";
+        std::cout << "# Iteration " << iteration << ". ";
+        std::cout << "# Depth ~= " << (double)iteration/run_options.num_particles << " nats.  ";
+        std::cout << "# Standard deviation of sum of ranks = ";
         double tot = 0.0;
         double tot_sq = 0.0;
         int n = run_options.num_particles;
@@ -167,7 +188,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     }
     // Save worst particle
     if(output_message)
-        std::cout << "    Saving worst particle..." << std::flush;
+        std::cout << "#    Saving worst particle..." << std::flush;
     write_output();
 
     if(output_message)
@@ -180,8 +201,28 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(last_iteration)
         return;
 
+    // Add new forbidden rectangles
+    int ix, iy;
+    for(iy=0; true; ++iy)
+    {
+        for(ix=0; true; ++ix)
+        {
+            if(d(ix, iy) > ds[worst])
+                break;
+
+            if(d(ix+1, iy) > ds[worst])
+            {
+                forbidden_xs.push_front(xs[x_indices[ix]]);
+                forbidden_ys.push_front(ys[y_indices[iy]]);
+            }
+        }
+
+        if(ix == 0)
+            break;
+    }
+
     if(output_message)
-        std::cout << "    Generating replacement particle..." << std::flush;
+        std::cout << "#    Generating replacement particle..." << std::flush;
 
     // Generate new particle
     // First, clone
@@ -208,20 +249,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         double proposal_x, proposal_y;
         std::tie(proposal_x, proposal_y) = proposal.get_scalars();
 
-        // Compute ranks
-        int xr = 0;
-        int yr = 0;
-        for(int j=0; j<run_options.num_particles; ++j)
-        {
-            if(xs[j] < proposal_x)
-                ++xr;
-            if(ys[j] < proposal_y)
-                ++yr;
-        }
-
-        double proposal_d = d(xr, yr);
-
-        if((proposal_d > ds[worst]) &&
+        if(test(proposal_x, proposal_y) &&
            (rng.rand() <= exp(logH)))
         {
             new_particle = proposal;
