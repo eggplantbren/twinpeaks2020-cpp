@@ -17,7 +17,7 @@ namespace TwinPeaks
 class Example
 {
     private:
-        static constexpr int N = 10; // Dimensionality
+        static constexpr int N = 100; // Dimensionality
         std::vector<double> xs;
 
     public:
@@ -72,8 +72,8 @@ std::tuple<double, double> Example::get_scalars() const
 
     for(double x: xs)
     {
-        f1 += -0.5*tau*pow(x - 0.45, 2);
-        f2 += -0.5*tau*pow(x - 0.55, 2);
+        f1 += -0.5*tau*pow(x - 0.5, 2);
+        f2 += -x/w;
     }
 
     return {f1, f2};
