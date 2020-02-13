@@ -41,7 +41,7 @@ class Sampler
         std::vector<int> x_ranks, y_ranks;
 
         // Positions along space filling curve
-        std::vector<double> ds;
+        std::vector<double> ds, dtbs;
 
         // Forbidden rectangles
         Constraints constraints;
@@ -87,6 +87,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,x_ranks(run_options.num_particles)
 ,y_ranks(run_options.num_particles)
 ,ds(run_options.num_particles)
+,dtbs(run_options.num_particles)
 {
     // Generate particles from the prior.
     std::cout << "# Generating " << run_options.num_particles << ' ';
@@ -114,13 +115,20 @@ void Sampler<T>::compute_orderings()
 
     // Map ranks to total order
     for(int i=0; i<run_options.num_particles; ++i)
+    {
         ds[i] = d(x_ranks[i], y_ranks[i], true);
+        dtbs[i] = dtb(x_ranks[i], y_ranks[i], true);
+    }
 
     // Find worst particle
     worst = 0;
     for(int i=1; i<run_options.num_particles; ++i)
+    {
         if(ds[i] < ds[worst])
             worst = i;
+        if((ds[i] == ds[worst]) && (dtbs[i] < dtbs[worst]))
+            worst = i;
+    }
 }
 
 template<typename T>
@@ -188,8 +196,10 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         {
             if(d(ix, iy) > ds[worst])
                 break;
+            if(d(ix, iy) == ds[worst] && (dtb(ix, iy) > dtbs[worst]))
 
-            if(d(ix+1, iy) > ds[worst])
+            if(d(ix+1, iy) > ds[worst] ||
+                (d(ix+1, iy) == ds[worst] && dtb(ix+1, iy) > dtbs[worst]))
                 constraints.add_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
         }
 

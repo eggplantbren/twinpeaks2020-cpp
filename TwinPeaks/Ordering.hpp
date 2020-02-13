@@ -15,11 +15,11 @@ namespace TwinPeaks
 * (distance along that path)
 */
 
-double d(int ix, int iy, bool corner=false);
+double d  (int ix, int iy, bool corner=false);
+double dtb(int ix, int iy, bool corner=false);
 
 /* Test function for the above */
 void test_d();
-
 
 /*
 * Compute ranks of all scalars with respect to the whole collection.
@@ -39,40 +39,16 @@ double d(int ix, int iy, bool corner)
 {
     if(corner)
         return 0.5*(d(ix, iy) + d(ix+1, iy+1));
+    return ix+iy;
+}
 
-    /****** ELSE ******/
-
-    double result = 0.0;
-    int tot = ix + iy;
-
-    // Segments prior to the one we're on
-    result += 0.5*tot*(tot - 1);
-
-    // Horizontal or vertical segments
-    result += tot;
-
-    // Version that pushes away from diagonals
-    int off_diag_dist;
-    if(iy == ix)
-        off_diag_dist = 0;
-    if(tot % 2 == 0)
-    {
-        // Even tot
-        off_diag_dist += std::abs(iy - ix);
-        if(iy < ix)
-            --off_diag_dist;
-    }
-    else
-    {
-        // Odd tot
-        off_diag_dist += std::abs(iy - ix);
-        if(iy < ix)
-            --off_diag_dist;
-    }
-    result += off_diag_dist;
-
-
-    return result;
+double dtb(int ix, int iy, bool corner)
+{
+    if(corner)
+        return 0.5*(dtb(ix, iy) + dtb(ix+1, iy+1));
+    if(ix+iy % 2 == 0)
+        return ix;
+    return iy;
 }
 
 /* Test function for the above */
