@@ -70,10 +70,12 @@ std::tuple<double, double> Example::get_scalars() const
     static constexpr double w = 0.01;
     static constexpr double tau = 1.0/(w*w);
 
-    for(double x: xs)
+    for(int i=0; i<N; ++i)
     {
-        f1 += -0.5*tau*pow(x - 0.5, 2);
-        f2 += -x/w;
+        if(i < N/2)
+            f1 += -0.5*tau*pow(xs[i] - 0.5, 2);
+        else
+            f2 += -0.5*tau*pow(xs[i] - 0.5, 2);
     }
 
     return {f1, f2};
