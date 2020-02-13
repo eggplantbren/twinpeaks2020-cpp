@@ -18,6 +18,7 @@ f.close()
 num_particles = run_options["num_particles"]
 
 subprocess.run("rm output/*.png", shell=True)
+subprocess.run("rm output/movie.mp4", shell=True)
 
 plt.figure(figsize=(9, 6))
 for i in range(5*output.shape[0]//num_particles):
