@@ -60,8 +60,8 @@ def canonical(T):
 def grid():
 
     # Temperature grid to look at
-    T1 = 10.0**np.linspace(-1.0, 3.0, 51)
-    T2 = 10.0**np.linspace(-1.0, 3.0, 51)
+    T1 = 10.0**np.linspace(-0.5, 3.0, 51)
+    T2 = 10.0**np.linspace(-0.5, 3.0, 51)
     T1, T2 = np.meshgrid(T1, T2)
 
     # Grids for true and estimated logZ and H
