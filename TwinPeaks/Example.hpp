@@ -17,7 +17,7 @@ namespace TwinPeaks
 class Example
 {
     private:
-        static constexpr int N = 100; // Dimensionality
+        static constexpr int N = 20; // Dimensionality
         std::vector<double> xs;
 
     public:
