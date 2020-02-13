@@ -9,15 +9,10 @@ def canonical_true(T):
     x = np.linspace(0.0, 1.0, 10001)
     logZ_true, H_true = 0.0, 0.0
 
-    y = np.exp(-0.5*(x-0.5)**2/0.01**2/T[0])
-    logZ_true += 10*np.log(np.trapz(y, x=x))
+    y = np.exp(-0.5*(x-0.5)**2/0.01**2/T[0] - x/0.01/T[1])
+    logZ_true += 20*np.log(np.trapz(y, x=x))
     y_normed = y/np.trapz(y, x=x)
-    H_true += 10*np.trapz(y_normed*np.log(y_normed + 1E-300), x=x)
-
-    y = np.exp(-0.5*(x-0.5)**2/0.01**2/T[1])
-    logZ_true += 10*np.log(np.trapz(y, x=x))
-    y_normed = y/np.trapz(y, x=x)
-    H_true += 10*np.trapz(y_normed*np.log(y_normed + 1E-300), x=x)
+    H_true += 20*np.trapz(y_normed*np.log(y_normed + 1E-300), x=x)
 
     return np.array([logZ_true, H_true])
 
