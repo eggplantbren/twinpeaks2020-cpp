@@ -19,7 +19,7 @@ class Atoms
     private:
 
         // Number of atoms
-        static constexpr int N = 100;
+        static constexpr int N = 20;
 
         // 2D positions
         std::vector<double> xs, ys;
@@ -94,8 +94,8 @@ void Atoms::from_prior(RNG& rng)
 double Atoms::perturb(RNG& rng)
 {
     int reps = 1;
-    if(rng.rand() <= 0.5)
-        reps = (int)pow((double)3, rng.rand());
+//    if(rng.rand() <= 0.5)
+//        reps = (int)pow((double)3, rng.rand());
 
     for(int rep=0; rep<reps; ++rep)
     {
@@ -117,7 +117,7 @@ std::tuple<double, double> Atoms::get_scalars() const
     for(int i=0; i<N; ++i)
     {
         for(int j=0; j<i; ++j)
-            f1 += terms[i][j];
+            f1 += -terms[i][j];
         f2 += -ys[i];
     }
 
