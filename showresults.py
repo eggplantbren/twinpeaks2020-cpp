@@ -31,6 +31,9 @@ for i in range(5*output.shape[0]//num_particles):
     plt.xlabel("$f_1$")
     plt.ylabel("$f_2$")
 
+    depth = (i+1)/5
+    plt.title(f"Depth = {depth} nats.")
+
     filename = "output/" + "%0.6d"%(i+1) + ".png"
     plt.savefig(filename)
     print(filename)
