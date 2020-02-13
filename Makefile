@@ -6,6 +6,7 @@ WARN = -Wall -Wextra -pedantic
 ALL = $(FLAGS) $(INCLUDE) $(OPTIM) $(WARN)
 
 default:
+	$(CXX) $(ALL) -c TwinPeaks/Atoms.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Constraints.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Example.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Misc.hpp
