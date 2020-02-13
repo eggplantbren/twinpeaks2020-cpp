@@ -19,7 +19,7 @@ class Atoms
     private:
 
         // Number of atoms
-        static constexpr int N = 10;
+        static constexpr int N = 100;
 
         // 2D positions
         std::vector<double> xs, ys;
@@ -27,6 +27,7 @@ class Atoms
         // Particle-particle potential energy terms
         std::vector<std::vector<double>> terms;
         void compute_terms();
+        void update_terms(int k);
 
     public:
 
@@ -57,17 +58,26 @@ Atoms::Atoms()
 
 }
 
-void Atoms::compute_terms()
+void Atoms::update_terms(int k)
 {
     double rsq;
-    for(int i=0; i<N; ++i)
+    for(int i=k+1; i<N; ++i)
     {
-        for(int j=0; j<i; ++j)
-        {
-            rsq = pow(xs[i] - xs[j], 2) + pow(ys[i] - ys[j], 2);
-            terms[i][j] = 0.5*rsq;
-        }
+        rsq = pow(xs[i] - xs[k], 2) + pow(ys[i] - ys[k], 2);
+        terms[i][k] = 0.5*rsq;
     }
+    for(int j=k+1; j<N; ++j)
+    {
+        rsq = pow(xs[k] - xs[j], 2) + pow(ys[k] - ys[j], 2);
+        terms[k][j] = 0.5*rsq;
+    }
+
+}
+
+void Atoms::compute_terms()
+{
+    for(int k=0; k<N; ++k)
+        update_terms(k);
 }
 
 void Atoms::from_prior(RNG& rng)
@@ -85,7 +95,7 @@ double Atoms::perturb(RNG& rng)
 {
     int reps = 1;
     if(rng.rand() <= 0.5)
-        reps = (int)pow((double)N, rng.rand());
+        reps = (int)pow((double)3, rng.rand());
 
     for(int rep=0; rep<reps; ++rep)
     {
@@ -93,10 +103,8 @@ double Atoms::perturb(RNG& rng)
         double& coord = (rng.rand() <= 0.5)?(xs[k]):(ys[k]);
         coord += rng.randh();
         wrap(coord, 0.0, 1.0);
+        update_terms(k);
     }
-
-    // Unnecessarily expensive
-    compute_terms();
 
     return 0;
 }
@@ -110,7 +118,7 @@ std::tuple<double, double> Atoms::get_scalars() const
     {
         for(int j=0; j<i; ++j)
             f1 += terms[i][j];
-        f2 += ys[i];
+        f2 += -ys[i];
     }
 
     return {f1, f2};
