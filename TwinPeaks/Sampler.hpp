@@ -167,15 +167,13 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::cout << "# Number of forbidden rectangles = ";
         std::cout << constraints.size() << "." << std::endl;
     }
+
     // Save worst particle
-    if(output_message)
-        std::cout << "#    Saving worst particle..." << std::flush;
     write_output();
 
     if(output_message)
     {
-        std::cout << "done. ";
-        std::cout << "Scalars = (" << xs[worst] << ", ";
+        std::cout << "#    Worst particle's scalars = (" << xs[worst] << ", ";
         std::cout << ys[worst] << ")." << std::endl;
     }
 
@@ -200,7 +198,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     }
 
     if(output_message)
-        std::cout << "#    Generating replacement particle..." << std::flush;
+        std::cout << "#    Generating new particle..." << std::flush;
 
     // Generate new particle
     // First, clone
