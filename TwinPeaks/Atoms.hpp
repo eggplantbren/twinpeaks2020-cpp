@@ -24,6 +24,10 @@ class Atoms
         // 2D positions
         std::vector<double> xs, ys;
 
+        // Particle-particle potential energy terms
+        std::vector<std::vector<double>> terms;
+        void compute_terms();
+
     public:
 
         // Constructor
@@ -48,8 +52,22 @@ class Atoms
 Atoms::Atoms()
 :xs(N)
 ,ys(N)
+,terms(N, std::vector<double>(N, 0.0))
 {
 
+}
+
+void Atoms::compute_terms()
+{
+    double rsq;
+    for(int i=0; i<N; ++i)
+    {
+        for(int j=0; j<i; ++j)
+        {
+            rsq = pow(xs[i] - xs[j], 2) + pow(ys[i] - ys[j], 2);
+            terms[i][j] = 0.5*rsq;
+        }
+    }
 }
 
 void Atoms::from_prior(RNG& rng)
@@ -59,6 +77,8 @@ void Atoms::from_prior(RNG& rng)
         xs[i] = rng.rand();
         ys[i] = rng.rand();
     }
+
+    compute_terms();
 }
 
 double Atoms::perturb(RNG& rng)
@@ -75,6 +95,9 @@ double Atoms::perturb(RNG& rng)
         wrap(coord, 0.0, 1.0);
     }
 
+    // Unnecessarily expensive
+    compute_terms();
+
     return 0;
 }
 
@@ -83,14 +106,11 @@ std::tuple<double, double> Atoms::get_scalars() const
     double f1 = 0.0;
     double f2 = 0.0;
 
-    // Parameters of the two peaks
-    static constexpr double w = 0.01;
-    static constexpr double tau = 1.0/(w*w);
-
     for(int i=0; i<N; ++i)
     {
-        f1 += -0.5*tau*pow(xs[i] - 0.5, 2);
-        f2 += -0.5*tau*pow(xs[i] - 0.5, 2);
+        for(int j=0; j<i; ++j)
+            f1 += terms[i][j];
+        f2 += ys[i];
     }
 
     return {f1, f2};
