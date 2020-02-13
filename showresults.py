@@ -6,7 +6,7 @@ import yaml
 # Plot dead particles
 output = np.loadtxt("output/scalars.csv", delimiter=",")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(9, 9))
 plt.plot(output[:,1], output[:,2], "k.", alpha=0.2, markersize=1)
 plt.xlabel("$f_1$")
 plt.ylabel("$f_2$")
@@ -20,7 +20,7 @@ num_particles = run_options["num_particles"]
 subprocess.run("rm output/*.png", shell=True)
 subprocess.run("rm output/movie.mp4", shell=True)
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(9, 9))
 for i in range(5*output.shape[0]//num_particles):
 
     points = output[0:(((i+1)*num_particles)//5), :]
