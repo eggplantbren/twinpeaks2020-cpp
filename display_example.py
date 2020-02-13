@@ -31,8 +31,8 @@ f.close()
 
 # Log prior weights
 logw = -np.arange(output.shape[0])/run_options["num_particles"]
+depth = -np.min(logw)
 logw = logw - logsumexp(logw)
-
 
 @numba.jit("float64[:](float64[:])")
 def canonical(T):
@@ -80,6 +80,11 @@ def grid():
 
 
 T1, T2, true_logZ, est_logZ, true_H, est_H = grid()
+
+# Apply some masking
+mask = est_H > 0.8*depth
+est_logZ = np.ma.masked_where(mask, est_logZ)
+est_H = np.ma.masked_where(mask, est_H)
 
 plt.subplot(2, 3, 1)
 plt.imshow(true_logZ, origin="lower")
