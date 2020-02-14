@@ -46,9 +46,7 @@ double dtb(int ix, int iy, bool corner)
 {
     if(corner)
         return 0.5*(dtb(ix, iy) + dtb(ix+1, iy+1));
-    if(ix+iy % 2 == 0)
-        return ix;
-    return iy;
+    return ix;
 }
 
 /* Test function for the above */
