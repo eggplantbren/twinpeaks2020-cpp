@@ -10,6 +10,7 @@
 #include <ostream>
 #include "RNG.hpp"
 #include "RunOptions.hpp"
+#include "sqlite3.h"
 #include <vector>
 
 namespace TwinPeaks
@@ -22,6 +23,9 @@ template<typename T>
 class Sampler
 {
     private:
+
+        // Go me
+        sqlite3* db;
 
         // Run options
         RunOptions run_options;
@@ -60,12 +64,18 @@ class Sampler
 
     public:
 
-        // Default constructor disabled
-        Sampler() = delete;
-
         // Constructor where you provide the number of particles
         // and an RNG for particle initialisation
         Sampler(RunOptions _run_options, RNG& rng);
+
+        // Custom destructor
+        ~Sampler();
+
+        // Disable other ones
+        Sampler() = delete;
+        Sampler(const Sampler&) = delete;
+        Sampler(Sampler&&) = delete;
+        Sampler& operator = (const Sampler&) = delete;
 
         // Run to target depth
         void run(RNG& rng);
@@ -89,6 +99,11 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,ds(run_options.num_particles)
 ,dtbs(run_options.num_particles)
 {
+    // Set up DB
+    sqlite3_open(":memory:", &db);
+    std::string query = "CREATE TABLE particles\
+                            (id INTEGER PRIMARY KEY);";
+
     // Generate particles from the prior.
     std::cout << "# Generating " << run_options.num_particles << ' ';
     std::cout << "particles from the prior..." << std::flush;
@@ -103,6 +118,12 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 
     // Save a record of the run options
     run_options.save();
+}
+
+template<typename T>
+Sampler<T>::~Sampler()
+{
+    sqlite3_close(db);
 }
 
 

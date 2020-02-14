@@ -16,7 +16,7 @@ default:
 	$(CXX) $(ALL) -c TwinPeaks/RunOptions.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Sampler.hpp
 	$(CXX) $(ALL) -c main.cpp
-	$(CXX) -o main main.o
+	$(CXX) -o main main.o -lsqlite3
 	rm -f main.o TwinPeaks/*.gch
 
 tidy:
