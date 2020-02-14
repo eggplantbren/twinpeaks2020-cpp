@@ -9,8 +9,14 @@ namespace TwinPeaks
 class Constraints
 {
     private:
+
+        // Forbidden rectangles
         std::list<double> forbidden_xs;
         std::list<double> forbidden_ys;
+
+        // Recent history
+        std::list<double> historical_xs;
+        std::list<double> historical_ys;
 
     public:
         Constraints();
@@ -18,13 +24,14 @@ class Constraints
         // Add a new forbidden rectangle
         void add_rectangle(double x, double y);
 
-
         // Test a position wrt the forbidden rectangles
         bool test(double x, double y) const;
 
         // Size
         size_t size() const;
 
+        // Add a point to history
+        void add_to_history(double x, double y);
 };
 
 
@@ -77,6 +84,19 @@ bool Constraints::test(double x, double y) const
 size_t Constraints::size() const
 {
     return forbidden_xs.size();
+}
+
+
+void Constraints::add_to_history(double x, double y)
+{
+    historical_xs.push_front(x);
+    historical_ys.push_front(y);
+
+    if(historical_xs.size() >= 1000)
+        historical_xs.pop_back();
+
+    if(historical_ys.size() >= 1000)
+        historical_ys.pop_back();
 }
 
 } // namespace

@@ -99,6 +99,16 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         std::tie(xs[i], ys[i]) = scalars;
     }
     compute_orderings();
+
+    // Create some fake "history"
+    T particle;
+    for(int i=0; i<run_options.num_particles; ++i)
+    {
+        particle.from_prior(rng);
+        double x, y;
+        std::tie(x, y) = particle.get_scalars();
+        constraints.add_to_history(x, y);
+    }
     std::cout << "done.\n#" << std::endl;
 
     // Save a record of the run options
@@ -178,6 +188,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
     // Save worst particle
     write_output();
+    constraints.add_to_history(xs[worst], ys[worst]);
 
     if(output_message)
     {
