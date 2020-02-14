@@ -30,7 +30,7 @@ class Constraints
         // Test a position wrt the forbidden rectangles
         bool test(double x, double y) const;
 
-        // Calculate (strict) LCC wrt history
+        // Calculate (strict) LCC wrt forbidden rectangles
         int lcc(double x, double y) const;
 
         // Size
