@@ -189,22 +189,25 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         return;
 
     // Add new forbidden rectangles
-    int ix, iy;
-    for(iy=0; true; ++iy)
+    for(int iy=0; iy<=run_options.num_particles; ++iy)
     {
-        for(ix=0; true; ++ix)
+        int highest_bad = -1;
+        for(int ix=0; ix<=run_options.num_particles; ++ix)
         {
-            if(d(ix, iy) > ds[worst])
-                break;
-            if(d(ix, iy) == ds[worst] && (dtb(ix, iy) > dtbs[worst]))
-
-            if(d(ix+1, iy) > ds[worst] ||
-                (d(ix+1, iy) == ds[worst] && dtb(ix+1, iy) > dtbs[worst]))
-                constraints.add_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
+            // Check if the current rectangle is bad
+            if(d(ix, iy) < ds[worst] ||
+                        (d(ix, iy) == ds[worst] && dtb(ix, iy) < dtbs[worst]))
+                highest_bad = ix;
         }
 
-        if(ix == 0)
-            break;
+        // If it's bad, add it to the constraints
+        if(iy==0 && highest_bad == run_options.num_particles) // Bottom right case
+            constraints.add_rectangle(1E300, ys[y_indices[iy]]);
+        else if(highest_bad == 0 && iy == run_options.num_particles) // Top left case
+            constraints.add_rectangle(xs[x_indices[highest_bad]], 1E300);
+        else if(highest_bad != -1) // Standard case
+            constraints.add_rectangle(xs[x_indices[highest_bad]], ys[y_indices[iy]]);
+
     }
 
     if(output_message)
