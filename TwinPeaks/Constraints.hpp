@@ -15,8 +15,8 @@ class Constraints
         std::list<double> forbidden_ys;
 
         // Recent history
-        std::list<double> historical_xs;
-        std::list<double> historical_ys;
+//        std::list<double> historical_xs;
+//        std::list<double> historical_ys;
 
     public:
         Constraints();
@@ -24,14 +24,18 @@ class Constraints
         // Add a new forbidden rectangle
         void add_rectangle(double x, double y);
 
+        // Add a point to history
+        void add_to_history(double x, double y);
+
         // Test a position wrt the forbidden rectangles
         bool test(double x, double y) const;
+
+        // Calculate (strict) LCC wrt history
+        int lcc(double x, double y) const;
 
         // Size
         size_t size() const;
 
-        // Add a point to history
-        void add_to_history(double x, double y);
 };
 
 
@@ -80,6 +84,23 @@ bool Constraints::test(double x, double y) const
     return true;
 }
 
+int Constraints::lcc(double x, double y) const
+{
+    int result = 0;
+
+    /* JUST REUSE FORBIDDEN RECTANGLES FOR THIS - IT MIGHT BE SUFFICIENT*/
+
+    auto it1 = forbidden_xs.begin();
+    auto it2 = forbidden_ys.begin();
+    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
+    {
+        if(*it1 < x && *it2 < y)
+            ++result;
+    }
+
+    return result;
+}
+
 
 size_t Constraints::size() const
 {
@@ -87,17 +108,17 @@ size_t Constraints::size() const
 }
 
 
-void Constraints::add_to_history(double x, double y)
-{
-    historical_xs.push_front(x);
-    historical_ys.push_front(y);
+//void Constraints::add_to_history(double x, double y)
+//{
+//    historical_xs.push_front(x);
+//    historical_ys.push_front(y);
 
-    if(historical_xs.size() >= 1000)
-        historical_xs.pop_back();
+//    if(historical_xs.size() >= 1000)
+//        historical_xs.pop_back();
 
-    if(historical_ys.size() >= 1000)
-        historical_ys.pop_back();
-}
+//    if(historical_ys.size() >= 1000)
+//        historical_ys.pop_back();
+//}
 
 } // namespace
 
