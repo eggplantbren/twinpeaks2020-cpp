@@ -16,6 +16,17 @@
 namespace TwinPeaks
 {
 
+//static int callback(void *NotUsed, int argc, char **argv, char **azColName)
+//{
+//    int i;
+//    for(i=0; i<argc; i++){
+//      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+//    }
+//    printf("\n");
+//    return 0;
+//}
+  
+
 /*
 * An object of this class is the current state of a sampler.
 */
@@ -100,19 +111,39 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 ,dtbs(run_options.num_particles)
 {
     // Set up DB
-    sqlite3_open(":memory:", &db);
-    std::string query = "CREATE TABLE particles\
-                            (id INTEGER PRIMARY KEY);";
+    sqlite3_open("test.db", &db);
+    std::string query = "BEGIN;\
+                         CREATE TABLE particle_info \
+                             (id INTEGER PRIMARY KEY,\
+                              x  REAL NOT NULL,\
+                              y  REAL NOT NULL,\
+                              x_rank INTEGER NOT NULL,\
+                              y_rank INTEGER NOT NULL) WITHOUT ROWID;\
+                         CREATE INDEX x_idx ON particle_info (x);\
+                         CREATE INDEX y_idx ON particle_info (y);\
+                         COMMIT;";
+    sqlite3_exec(db, query.c_str(), nullptr, nullptr, nullptr);
+
+
 
     // Generate particles from the prior.
     std::cout << "# Generating " << run_options.num_particles << ' ';
     std::cout << "particles from the prior..." << std::flush;
+
+    sqlite3_exec(db, "BEGIN;", nullptr, nullptr, nullptr);
+
     for(int i=0; i<run_options.num_particles; ++i)
     {
         particles[i].from_prior(rng);
         auto scalars = particles[i].get_scalars();
         std::tie(xs[i], ys[i]) = scalars;
+
+        
+        sqlite3_exec(db, query.c_str(), nullptr, nullptr, nullptr);
     }
+
+    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
     compute_orderings();
     std::cout << "done.\n#" << std::endl;
 
