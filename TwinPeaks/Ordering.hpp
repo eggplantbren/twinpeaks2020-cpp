@@ -15,8 +15,7 @@ namespace TwinPeaks
 * (distance along that path)
 */
 
-double d  (int ix, int iy, bool corner=false);
-double dtb(int ix, int iy, bool corner=false);
+double d(int ix, int iy, bool corner=false);
 
 /* Test function for the above */
 void test_d();
@@ -42,12 +41,6 @@ double d(int ix, int iy, bool corner)
     return ix+iy;
 }
 
-double dtb(int ix, int iy, bool corner)
-{
-    if(corner)
-        return 0.5*(dtb(ix, iy) + dtb(ix+1, iy+1));
-    return ix;
-}
 
 /* Test function for the above */
 void test_d(int num_particles)

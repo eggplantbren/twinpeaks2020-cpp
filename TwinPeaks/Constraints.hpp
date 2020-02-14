@@ -15,8 +15,8 @@ class Constraints
         std::list<double> forbidden_ys;
 
         // Recent history
-//        std::list<double> historical_xs;
-//        std::list<double> historical_ys;
+        std::list<double> historical_xs;
+        std::list<double> historical_ys;
 
     public:
         Constraints();
@@ -30,7 +30,7 @@ class Constraints
         // Test a position wrt the forbidden rectangles
         bool test(double x, double y) const;
 
-        // Calculate (strict) LCC wrt forbidden rectangles
+        // Calculate (strict) LCC wrt historical points
         int lcc(double x, double y) const;
 
         // Size
@@ -88,11 +88,9 @@ int Constraints::lcc(double x, double y) const
 {
     int result = 0;
 
-    /* JUST REUSE FORBIDDEN RECTANGLES FOR THIS - IT MIGHT BE SUFFICIENT*/
-
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
+    auto it1 = historical_xs.begin();
+    auto it2 = historical_ys.begin();
+    while(it1 != historical_xs.end() && it2 != historical_ys.end())
     {
         if(*it1 < x && *it2 < y)
             ++result;
