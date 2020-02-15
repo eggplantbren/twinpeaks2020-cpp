@@ -16,15 +16,14 @@
 namespace TwinPeaks
 {
 
-//static int callback(void *NotUsed, int argc, char **argv, char **azColName)
-//{
-//    int i;
-//    for(i=0; i<argc; i++){
-//      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-//    }
-//    printf("\n");
-//    return 0;
-//}
+int callback(void* not_used, int argc, char** argv, char** col_name)
+{
+    for(int i=0; i<argc; i++)
+    {
+        std::cout << argv[i][0] << ' ' << argv[i][1] << ' ' << argv[i][2] << std::endl;
+    }
+    return 0;
+}
   
 
 /*
@@ -112,13 +111,13 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
 {
     // Set up DB
     sqlite3_open("test.db", &db);
+
+    sqlite3_exec(db, "PRAGMA JOURNAL_MODE = delete;", nullptr, nullptr, nullptr);
     std::string query = "BEGIN;\
                          CREATE TABLE particle_info \
                              (id INTEGER PRIMARY KEY,\
                               x  REAL NOT NULL,\
-                              y  REAL NOT NULL,\
-                              x_rank INTEGER NOT NULL,\
-                              y_rank INTEGER NOT NULL) WITHOUT ROWID;\
+                              y  REAL NOT NULL) WITHOUT ROWID;\
                          CREATE INDEX x_idx ON particle_info (x);\
                          CREATE INDEX y_idx ON particle_info (y);\
                          COMMIT;";
@@ -138,17 +137,22 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
         auto scalars = particles[i].get_scalars();
         std::tie(xs[i], ys[i]) = scalars;
 
-        
+        query = "INSERT INTO particle_info VALUES (?, ?, ?);";
         sqlite3_exec(db, query.c_str(), nullptr, nullptr, nullptr);
     }
 
     sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+
+    query = "SELECT * FROM particle_info;";
+    sqlite3_exec(db, query.c_str(), callback, nullptr, nullptr);
 
     compute_orderings();
     std::cout << "done.\n#" << std::endl;
 
     // Save a record of the run options
     run_options.save();
+
+    exit(0);
 }
 
 template<typename T>

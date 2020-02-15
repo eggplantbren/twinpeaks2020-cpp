@@ -12,7 +12,7 @@ int main()
     RNG rng;
 
     // Create and run sampler
-    Sampler<Example> sampler(RunOptions(1000, 1000, 10, 100.0), rng);
+    Sampler<Example> sampler(RunOptions(1000, 1000, 10, 1.0), rng);
     sampler.run(rng);
 
     return 0;
