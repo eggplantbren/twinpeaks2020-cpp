@@ -31,7 +31,10 @@ std::tuple<std::vector<int>, std::vector<int>>
 
 double Q(int xr, int yr, int num_particles)
 {
-    return 1.0/(num_particles - xr)/(num_particles - yr);
+    double N = num_particles;
+    double X = N - xr - 0.5;
+    double Y = N - xr - 0.5;
+    return N*N/(X*Y + N*N);
 }
 
 
