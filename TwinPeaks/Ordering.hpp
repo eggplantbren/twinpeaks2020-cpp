@@ -33,7 +33,7 @@ double Q(int xr, int yr, int num_particles)
 {
     double N = num_particles;
     double X = N - xr - 0.5;
-    double Y = N - xr - 0.5;
+    double Y = N - yr - 0.5;
     return N*N/(X*Y + N*N);
 }
 
