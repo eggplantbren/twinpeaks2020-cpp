@@ -181,20 +181,13 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         return;
 
     // Add new forbidden rectangles
-    int xr, yr;
-    for(yr=0; true; ++yr)
+    for(int yr=1; yr <= options.num_particles; ++yr)
     {
-        for(xr=0; true; ++xr)
+        for(int xr=1; xr <= options.num_particles; ++xr)
         {
-            if(Q(xr, yr, options.num_particles) > Qs[worst])
-                break;
-
-            if(Q(xr+1, yr, options.num_particles) > Qs[worst])
-                constraints.add_rectangle(xs[x_indices[xr]], ys[y_indices[yr]]);
+            if(Q(xr, yr, options.num_particles, false) < Qs[worst])
+                constraints.add_rectangle(xs[x_indices[xr-1]], ys[y_indices[yr-1]]);
         }
-
-        if(xr == 0)
-            break;
     }
 
     if(output_message)
