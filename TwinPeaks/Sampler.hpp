@@ -24,7 +24,7 @@ class Sampler
     private:
 
         // Run options
-        RunOptions run_options;
+        RunOptions options;
 
         // Iteration counter
         int iteration;
@@ -40,8 +40,8 @@ class Sampler
         std::vector<int> x_indices, y_indices;
         std::vector<int> x_ranks, y_ranks;
 
-        // Positions along space filling curve
-        std::vector<double> ds;
+        // Quality (target scalar)
+        std::vector<double> Qs;
 
         // Forbidden rectangles
         Constraints constraints;
@@ -65,7 +65,7 @@ class Sampler
 
         // Constructor where you provide the number of particles
         // and an RNG for particle initialisation
-        Sampler(RunOptions _run_options, RNG& rng);
+        Sampler(RunOptions _options, RNG& rng);
 
         // Run to target depth
         void run(RNG& rng);
@@ -75,23 +75,23 @@ class Sampler
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
-Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
-:run_options(std::move(_run_options))
+Sampler<T>::Sampler(RunOptions _options, RNG& rng)
+:options(std::move(_options))
 ,iteration(1)
 ,valid(true)
-,particles(run_options.num_particles)
-,xs(run_options.num_particles)
-,ys(run_options.num_particles)
-,x_indices(run_options.num_particles)
-,y_indices(run_options.num_particles)
-,x_ranks(run_options.num_particles)
-,y_ranks(run_options.num_particles)
-,ds(run_options.num_particles)
+,particles(options.num_particles)
+,xs(options.num_particles)
+,ys(options.num_particles)
+,x_indices(options.num_particles)
+,y_indices(options.num_particles)
+,x_ranks(options.num_particles)
+,y_ranks(options.num_particles)
+,Qs(options.num_particles)
 {
     // Generate particles from the prior.
-    std::cout << "# Generating " << run_options.num_particles << ' ';
+    std::cout << "# Generating " << options.num_particles << ' ';
     std::cout << "particles from the prior..." << std::flush;
-    for(int i=0; i<run_options.num_particles; ++i)
+    for(int i=0; i<options.num_particles; ++i)
     {
         particles[i].from_prior(rng);
         auto scalars = particles[i].get_scalars();
@@ -101,7 +101,7 @@ Sampler<T>::Sampler(RunOptions _run_options, RNG& rng)
     std::cout << "done.\n#" << std::endl;
 
     // Save a record of the run options
-    run_options.save();
+    options.save();
 }
 
 
@@ -113,13 +113,13 @@ void Sampler<T>::compute_orderings()
     std::tie(y_indices, y_ranks) = indices_and_ranks(ys);
 
     // Map ranks to total order
-    for(int i=0; i<run_options.num_particles; ++i)
-        ds[i] = d(x_ranks[i], y_ranks[i], true);
+    for(int i=0; i<options.num_particles; ++i)
+        Qs[i] = Q(x_ranks[i], y_ranks[i], options.num_particles);
 
     // Find worst particle
     worst = 0;
-    for(int i=1; i<run_options.num_particles; ++i)
-        if(ds[i] < ds[worst])
+    for(int i=1; i<options.num_particles; ++i)
+        if(Qs[i] < Qs[worst])
             worst = i;
 }
 
@@ -132,8 +132,8 @@ void Sampler<T>::run(RNG& rng)
         std::cerr << std::endl;
         return;
     }
-    int iterations = static_cast<int>(run_options.num_particles
-                                                *run_options.depth);
+    int iterations = static_cast<int>(options.num_particles
+                                                *options.depth);
     for(int i=0; i<iterations; ++i)
         advance(rng, i==iterations-1);
     valid = false;
@@ -143,19 +143,19 @@ void Sampler<T>::run(RNG& rng)
 template<typename T>
 void Sampler<T>::advance(RNG& rng, bool last_iteration)
 {
-    bool output_message = run_options.num_particles <= 100 ||
-                                iteration % run_options.num_particles == 0;
+    bool output_message = options.num_particles <= 100 ||
+                                iteration % options.num_particles == 0;
 
     // Progress message
     if(output_message)
     {
         std::cout << std::setprecision(12);
         std::cout << "# Iteration " << iteration << ". ";
-        std::cout << "Depth ~= " << (double)iteration/run_options.num_particles << " nats.\n";
+        std::cout << "Depth ~= " << (double)iteration/options.num_particles << " nats.\n";
         std::cout << "# Standard deviation of sum of ranks = ";
         double tot = 0.0;
         double tot_sq = 0.0;
-        int n = run_options.num_particles;
+        int n = options.num_particles;
         for(int i=0; i<n; ++i)
         {
             tot += (x_ranks[i] + y_ranks[i]);
@@ -181,19 +181,19 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         return;
 
     // Add new forbidden rectangles
-    int ix, iy;
-    for(iy=0; true; ++iy)
+    int xr, yr;
+    for(yr=0; true; ++yr)
     {
-        for(ix=0; true; ++ix)
+        for(xr=0; true; ++xr)
         {
-            if(d(ix, iy) > ds[worst])
+            if(Q(xr, yr, options.num_particles) > Qs[worst])
                 break;
 
-            if(d(ix+1, iy) > ds[worst])
-                constraints.add_rectangle(xs[x_indices[ix]], ys[y_indices[iy]]);
+            if(Q(xr+1, yr, options.num_particles) > Qs[worst])
+                constraints.add_rectangle(xs[x_indices[xr]], ys[y_indices[yr]]);
         }
 
-        if(ix == 0)
+        if(xr == 0)
             break;
     }
 
@@ -205,15 +205,15 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     int copy = 0;
     do
     {
-        copy = rng.rand_int(run_options.num_particles);
-    }while(run_options.num_particles > 1 && copy == worst);
+        copy = rng.rand_int(options.num_particles);
+    }while(options.num_particles > 1 && copy == worst);
     T new_particle = particles[copy];
     double new_x = xs[copy];
     double new_y = ys[copy];
 
     // Now do Metropolis
     int accepted = 0;
-    for(int i=0; i<run_options.mcmc_steps; ++i)
+    for(int i=0; i<options.mcmc_steps; ++i)
     {
         // Make proposal
 
@@ -245,7 +245,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     {
         std::cout << "done. ";
         std::cout << "Metropolis acceptance rate = ";
-        std::cout << accepted << '/' << run_options.mcmc_steps << '.' << std::endl;
+        std::cout << accepted << '/' << options.mcmc_steps << '.' << std::endl;
     }
 
     // Compute new orderings.
@@ -287,10 +287,10 @@ void Sampler<T>::write_output() const
     fout.close();
 
     // Now output entire particle
-    if(iteration % run_options.thin != 0)
+    if(iteration % options.thin != 0)
         return;
 
-    if(iteration / run_options.thin == 1)
+    if(iteration / options.thin == 1)
         fout.open("output/particles.csv", std::ios::out);
     else
         fout.open("output/particles.csv", std::ios::out | std::ios::app);

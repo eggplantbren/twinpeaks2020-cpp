@@ -11,15 +11,10 @@ namespace TwinPeaks
 
 
 /*
-* Convert ranks (a pair) to integers
-* (distance along that path)
+* Convert ranks (a pair) to the target scalar
 */
 
-double d(int ix, int iy, bool corner=false);
-
-/* Test function for the above */
-void test_d();
-
+double Q(int xr, int yr, int num_particles);
 
 /*
 * Compute ranks of all scalars with respect to the whole collection.
@@ -31,66 +26,12 @@ std::tuple<std::vector<int>, std::vector<int>>
 
 
 /*
-* Convert ranks (a pair) to integers
-* (distance along that path)
+* Convert ranks (a pair) to the target scalar
 */
 
-double d(int ix, int iy, bool corner)
+double Q(int xr, int yr, int num_particles)
 {
-    if(corner)
-        return 0.5*(d(ix, iy) + d(ix+1, iy+1));
-
-    /****** ELSE ******/
-
-    double result = 0.0;
-    int tot = ix + iy;
-
-    // Segments prior to the one we're on
-    result += 0.5*tot*(tot - 1);
-
-    // Horizontal or vertical segments
-    result += tot;
-
-    // Version that pushes away from diagonals
-    int off_diag_dist;
-    if(iy == ix)
-        off_diag_dist = 0;
-    if(tot % 2 == 0)
-    {
-        // Even tot
-        off_diag_dist += std::abs(iy - ix);
-        if(iy < ix)
-            --off_diag_dist;
-    }
-    else
-    {
-        // Odd tot
-        off_diag_dist += std::abs(iy - ix);
-        if(iy < ix)
-            --off_diag_dist;
-    }
-    result += off_diag_dist;
-
-
-    return result;
-}
-
-/* Test function for the above */
-void test_d(int num_particles)
-{
-    for(int iy=num_particles; iy>=0; --iy)
-    {
-        for(int ix=0; ix<=num_particles; ++ix)
-            std::cout << d(ix, iy) << ' ';
-        std::cout << std::endl; 
-    }
-    std::cout << std::endl;
-    for(int iy=num_particles-1; iy>=0; --iy)
-    {
-        for(int ix=0; ix<num_particles; ++ix)
-            std::cout << d(ix, iy, true) << ' ';
-        std::cout << std::endl; 
-    }
+    return 1.0/(num_particles - xr)/(num_particles - yr);
 }
 
 
