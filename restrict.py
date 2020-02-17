@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as rng
 
-N = 5
-alpha = -1
+N = 3
+alpha = 0
 beta = np.sqrt(1.0 - alpha**2)
 
 reps = 1
@@ -35,14 +35,25 @@ for rep in range(reps):
     thresh = Q[worst][0]
 
     # Grid of Q-values
-    Xgrid, Ygrid = np.meshgrid(np.arange(N+1), 1+np.arange(N+1))
+    Xgrid, Ygrid = np.meshgrid(np.arange(N+1), np.arange(N+1))
     Qgrid = N**2/(Xgrid*Ygrid + N**2)
 
     plt.figure(figsize=(8, 8))
-    plt.plot(X[Q > thresh], Y[Q > thresh], "wo", markersize=10)
-    plt.plot(X[Q == thresh], Y[Q == thresh], "yo", markersize=10)
-    plt.imshow((Qgrid < thresh).astype("int64"), origin="lower",
-               cmap="coolwarm")
+    plt.plot(X[Q > thresh], Y[Q > thresh],   "ys", markersize=10)
+    plt.plot(X[Q == thresh], Y[Q == thresh], color="y", marker="X",
+                linestyle="None", markersize=10)
+    plt.plot(Xgrid[Qgrid > thresh].flatten(),
+             Ygrid[Qgrid > thresh].flatten(), color="lightgreen",
+                    linestyle="None", marker="*")
+    plt.plot(Xgrid[Qgrid < thresh].flatten(),
+             Ygrid[Qgrid < thresh].flatten(), "r*")
+    plt.plot(Xgrid[Qgrid == thresh].flatten(),
+             Ygrid[Qgrid == thresh].flatten(), "y*")
+
+
+#    plt.plot(Xgrid.flatten(), Ygrid.flatten(), "o", color="gray")
+#    plt.imshow((Qgrid > thresh).astype("int64"), origin="lower",
+#               cmap="coolwarm_r")
     plt.show()
 
 
