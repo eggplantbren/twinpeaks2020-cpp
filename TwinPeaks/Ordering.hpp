@@ -32,14 +32,16 @@ std::tuple<std::vector<int>, std::vector<int>>
 double Q(int xr, int yr, int num_particles, bool at_particle)
 {
     double N = num_particles;
-    double X = N - xr;
-    double Y = N - yr;
+
+    // Floats
+    double xrf = xr;
+    double yrf = yr;
     if(at_particle)
     {
-        X -= 0.5;
-        Y -= 0.5;
+        xrf += 0.5;
+        yrf += 0.5;
     }
-    return N*N/(X*Y + N*N);
+    return N/((N-xrf)*(N-yrf) + 1);
 }
 
 
