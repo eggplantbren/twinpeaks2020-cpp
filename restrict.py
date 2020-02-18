@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as rng
 
-N = 3
+N = 5
 alpha = 0
 beta = np.sqrt(1.0 - alpha**2)
 
@@ -21,34 +21,33 @@ for rep in range(reps):
     y_ranks = np.empty(N)
     y_ranks[y_indices] = np.arange(0, N)
 
-    # Related to X from classic NS.
-    # Existing particles have X in {0.5, 1.5, ..., N-0.5} (length N)
-    # Any new particles will have X in {0, 1, ..., N} (length N+1)
-    X = N - x_ranks - 0.5
-    Y = N - y_ranks - 0.5
+    # Existing particles have xx in {0.5, 1.5, ..., N-0.5} (length N)
+    xx = x_ranks + 0.5
+    yy = y_ranks + 0.5
 
     # Target scalar at particles
-    Q = N**2/(X*Y + N**2)
+    qq = N/((N-xx)*(N-yy) + 1)
 
     # Worst particle
-    worst = np.nonzero(Q == Q.min())[0]
-    thresh = Q[worst][0]
+    worst = np.nonzero(qq == qq.min())[0]
+    thresh = qq[worst][0]
 
-    # Grid of Q-values
-    Xgrid, Ygrid = np.meshgrid(np.arange(N+1), np.arange(N+1))
-    Qgrid = N**2/(Xgrid*Ygrid + N**2)
+    # Grid - new particles would land here
+    xx_grid, yy_grid = np.meshgrid(np.arange(N+1), np.arange(N+1))
+    qq_grid = N/((N - xx_grid)*(N - yy_grid) + 1)
 
     plt.figure(figsize=(8, 8))
-    plt.plot(X[Q > thresh], Y[Q > thresh],   "ys", markersize=10)
-    plt.plot(X[Q == thresh], Y[Q == thresh], color="y", marker="X",
+    plt.plot(xx[qq > thresh],  yy[qq > thresh],   "ys", markersize=10)
+    plt.plot(xx[qq == thresh], yy[qq == thresh], color="y", marker="X",
                 linestyle="None", markersize=10)
-    plt.plot(Xgrid[Qgrid > thresh].flatten(),
-             Ygrid[Qgrid > thresh].flatten(), color="lightgreen",
+
+    plt.plot(xx_grid[qq_grid > thresh].flatten(),
+             yy_grid[qq_grid > thresh].flatten(), color="lightgreen",
                     linestyle="None", marker="*")
-    plt.plot(Xgrid[Qgrid < thresh].flatten(),
-             Ygrid[Qgrid < thresh].flatten(), "r*")
-    plt.plot(Xgrid[Qgrid == thresh].flatten(),
-             Ygrid[Qgrid == thresh].flatten(), "y*")
+    plt.plot(xx_grid[qq_grid < thresh].flatten(),
+             yy_grid[qq_grid < thresh].flatten(), "r*")
+    plt.plot(xx_grid[qq_grid == thresh].flatten(),
+             yy_grid[qq_grid == thresh].flatten(), "y*")
 
 
 #    plt.plot(Xgrid.flatten(), Ygrid.flatten(), "o", color="gray")
