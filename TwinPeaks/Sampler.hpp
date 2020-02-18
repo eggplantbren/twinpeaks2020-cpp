@@ -182,16 +182,24 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
     // Add new forbidden rectangles
     const int& N=options.num_particles;
+    int xr;
     for(int yr=N-1; yr>=0; --yr)
     {
-        for(int xr=0; xr<N; ++xr)
+        std::vector<std::tuple<double, double>> rects;
+        for(xr=0; xr<N; ++xr)
         {
             if(Q(xr, yr, N, false) < Qs[worst])
             {
-                constraints.add_rectangle(xs[x_indices[xr]],
+                rects.emplace_back(xs[x_indices[xr]],
                                           ys[y_indices[yr]]);
-                break;
             }
+            else
+                break;
+        }
+        if(rects.size() > 0)
+        {
+            constraints.add_rectangle(std::get<0>(rects.back()),
+                                  std::get<1>(rects.back()));
         }
     }
 
