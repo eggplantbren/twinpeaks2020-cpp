@@ -1,7 +1,11 @@
 #ifndef TwinPeaks_Constraints_hpp
 #define TwinPeaks_Constraints_hpp
 
-#include <list>
+#include <cstdlib>
+#include <iostream>
+
+// SOCI headers
+#include "sqlite_modern_cpp/hdr/sqlite_modern_cpp.h"
 
 namespace TwinPeaks
 {
@@ -9,8 +13,7 @@ namespace TwinPeaks
 class Constraints
 {
     private:
-        std::list<double> forbidden_xs;
-        std::list<double> forbidden_ys;
+        sqlite::database db;
 
     public:
         Constraints();
@@ -18,65 +21,57 @@ class Constraints
         // Add a new forbidden rectangle
         void add_rectangle(double x, double y);
 
-
         // Test a position wrt the forbidden rectangles
-        bool test(double x, double y) const;
+        bool test(double x, double y);
 
         // Size
-        size_t size() const;
-
+        int size();
 };
 
 
 /* IMPLEMENTATIONS FOLLOW */
 
 Constraints::Constraints()
+:db(":memory:")
 {
+    db << "CREATE TABLE rectangles\
+            (id INTEGER PRIMARY KEY,\
+             xs REAL,\
+             ys REAL);";
 
+    db << "CREATE INDEX x_idx ON rectangles (xs);";
+    db << "CREATE INDEX y_idx ON rectangles (ys);";
+    db << "CREATE INDEX xy_idx ON rectangles (xs, ys);";
+    db << "CREATE INDEX yx_idx ON rectangles (ys, xs);";
 }
+
 
 
 
 void Constraints::add_rectangle(double x, double y)
 {
-    // First, prune redundant old rectangles
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_ys.end())
-    {
-        if(x >= *it1 && y >= *it2)
-        {
-            it1 = forbidden_xs.erase(it1);
-            it2 = forbidden_ys.erase(it2);
-        }
-
-        ++it1;
-        ++it2;
-    }
-
-    forbidden_xs.push_front(x);
-    forbidden_ys.push_front(y);
+    db << "BEGIN;";
+    db << "DELETE FROM rectangles WHERE xs < ? AND ys < ?;" << x << y;
+    db << "INSERT INTO rectangles (xs, ys) VALUES (?, ?);"  << x << y;
+    db << "COMMIT;";
 }
 
 
-bool Constraints::test(double x, double y) const
+bool Constraints::test(double x, double y)
 {
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
-    {
-        if(x < *it1 && y < *it2)
-            return false;
-        ++it1;
-        ++it2;
-    }
-    return true;
+    int count;
+    db << "SELECT COUNT(*) FROM\
+                (SELECT * FROM rectangles WHERE xs > ? AND ys > ? LIMIT 1);"
+       << x << y >> count;
+    return (count == 0);
 }
 
 
-size_t Constraints::size() const
+int Constraints::size()
 {
-    return forbidden_xs.size();
+    int count;
+    db << "SELECT COUNT(*) FROM rectangles;" >> count;
+    return count;
 }
 
 } // namespace
