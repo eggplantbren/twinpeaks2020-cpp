@@ -1,7 +1,7 @@
 #ifndef TwinPeaks_Constraints_hpp
 #define TwinPeaks_Constraints_hpp
 
-#include <list>
+#include <vector>
 
 namespace TwinPeaks
 {
@@ -9,8 +9,8 @@ namespace TwinPeaks
 class Constraints
 {
     private:
-        std::list<double> forbidden_xs;
-        std::list<double> forbidden_ys;
+        std::vector<double> forbidden_xs;
+        std::vector<double> forbidden_ys;
 
     public:
         Constraints();
@@ -49,13 +49,15 @@ void Constraints::add_rectangle(double x, double y)
             it1 = forbidden_xs.erase(it1);
             it2 = forbidden_ys.erase(it2);
         }
-
-        ++it1;
-        ++it2;
+        else
+        {
+            ++it1;
+            ++it2;
+        }
     }
 
-    forbidden_xs.push_front(x);
-    forbidden_ys.push_front(y);
+    forbidden_xs.push_back(x);
+    forbidden_ys.push_back(y);
 }
 
 
