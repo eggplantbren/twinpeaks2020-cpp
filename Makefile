@@ -9,6 +9,7 @@ default:
 	$(CXX) $(ALL) -c TwinPeaks/Atoms.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Constraints.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Example.hpp
+	$(CXX) $(ALL) -c TwinPeaks/Harder.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Misc.hpp
 	$(CXX) $(ALL) -c TwinPeaks/RNG.hpp
 	$(CXX) $(ALL) -c TwinPeaks/Ordering.hpp
