@@ -1,11 +1,9 @@
 #ifndef TwinPeaks_Constraints_hpp
 #define TwinPeaks_Constraints_hpp
 
-#include <boost/container/flat_set.hpp>
-#include <functional>
+#include <algorithm>
 #include "Ordering.hpp"
-#include <set>
-#include <tuple>
+#include <vector>
 
 namespace TwinPeaks
 {
@@ -30,7 +28,7 @@ struct Point
     {
         if(x < other.x)
             return true;
-        if(x == other.x && y > other.y)
+        if(x == other.x && y > other.y) // y goes in reverse
             return true;
         return false;
     }  
@@ -43,15 +41,15 @@ class Constraints
     private:
 
         // The corners of the rectangles
-        boost::container::flat_set<Point,
-                                        std::less<>> corners;
+        // Using sorted vector.
+        // See http://lafstern.org/matt/col1.pdf
+        std::vector<Point> corners;
 
     public:
         Constraints();
 
         // Add a new forbidden rectangle
         void add_rectangle(double x, double y);
-
 
         // Test a position wrt the forbidden rectangles
         bool test(double x, double y) const;
@@ -74,22 +72,17 @@ Constraints::Constraints()
 void Constraints::add_rectangle(double x, double y)
 {
     // First, prune redundant old rectangles
-    // Can't erase very well from a boost flat_set so copy over to a vector
-    // temporarily.
-    std::vector<Point> temp;
-    for(auto it=corners.begin(); it != corners.end(); ++it)
+    for(auto it=corners.begin(); it != corners.end();)
     {
-        if(x < it->x || y < it->y)
-            temp.push_back(*it);
+        if(x >= it->x && y >= it->y)
+            it = corners.erase(it);
+        else
+            ++it;
     }
 
-    // Recreate the set after pruning
-    corners.clear();
-    for(auto c: temp)
-        corners.insert(c);
-
-    // Add the new point.
-    corners.emplace(Point{x, y});
+    // Add the new point (in the right place)
+    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
+    corners.insert(it, Point{x, y});
 }
 
 
@@ -98,7 +91,7 @@ bool Constraints::test(double x, double y) const
     // New efficient way
 
     // The rectangle just after (x, y), if there is one.
-    auto it = corners.lower_bound(Point{x, y});
+    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
     if(it == corners.end())
         return true;
 
