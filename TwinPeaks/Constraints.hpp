@@ -23,8 +23,8 @@ class Constraints
     private:
 
         // The corners of the rectangles
-        std::set<std::tuple<double, double>,
-                 decltype(&less_fst)> corners;
+        std::multiset<std::tuple<double, double>,
+                      decltype(&less_fst)> corners;
 
     public:
         Constraints();
