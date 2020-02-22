@@ -12,7 +12,7 @@ namespace TwinPeaks
 
 
 // Represent a point with < based on x
-// but then y can break a tie [in reverse order].
+// but then y can break a tie [reverse order for y!]
 struct Point
 {
     double x;
@@ -30,7 +30,7 @@ struct Point
     {
         if(x < other.x)
             return true;
-        if(x == other.x && y > other.y) // Note the >
+        if(x == other.x && y > other.y)
             return true;
         return false;
     }  
@@ -95,13 +95,23 @@ void Constraints::add_rectangle(double x, double y)
 
 bool Constraints::test(double x, double y) const
 {
-    // Old inefficient way
-    for(auto it=corners.begin(); it != corners.end(); ++it)
-    {
-        if(x < it->x && y < it->y)
-            return false;
-    }
-    return true;
+    // New efficient way
+
+    // The rectangle just after (x, y), if there is one.
+    auto it = corners.lower_bound(Point{x, y});
+    if(it == corners.end())
+        return true;
+
+    return y > it->y;
+
+
+//    // Old inefficient way
+//    for(auto it=corners.begin(); it != corners.end(); ++it)
+//    {
+//        if(x < it->x && y < it->y)
+//            return false;
+//    }
+//    return true;
 }
 
 
