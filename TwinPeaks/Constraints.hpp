@@ -10,10 +10,10 @@ namespace TwinPeaks
 {
 
 
-bool less_fst(const std::tuple<double, double>& x,
-              const std::tuple<double, double>& y)
+bool less_fst(const std::tuple<double, double>& z1,
+              const std::tuple<double, double>& z2)
 {
-    return std::get<0>(x) < std::get<0>(y);
+    return std::get<0>(z1) < std::get<0>(z2);
 }
 
 
