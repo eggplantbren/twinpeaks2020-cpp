@@ -152,17 +152,6 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::cout << std::setprecision(12);
         std::cout << "# Iteration " << iteration << ". ";
         std::cout << "Depth ~= " << (double)iteration/options.num_particles << " nats.\n";
-        std::cout << "# Standard deviation of sum of ranks = ";
-        double tot = 0.0;
-        double tot_sq = 0.0;
-        int n = options.num_particles;
-        for(int i=0; i<n; ++i)
-        {
-            tot += (x_ranks[i] + y_ranks[i]);
-            tot_sq += pow(x_ranks[i] + y_ranks[i], 2);
-        }
-        std::cout << sqrt(tot_sq/n - pow(tot/n, 2)) << '.';
-        std::cout << std::endl;
 
         std::cout << "# Number of forbidden rectangles = ";
         std::cout << constraints.size() << "." << std::endl;
