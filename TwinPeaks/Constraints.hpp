@@ -1,16 +1,30 @@
 #ifndef TwinPeaks_Constraints_hpp
 #define TwinPeaks_Constraints_hpp
 
-#include <vector>
+#include <functional>
+#include "Ordering.hpp"
+#include <set>
+#include <tuple>
 
 namespace TwinPeaks
 {
 
+
+bool less_fst(const std::tuple<double, double>& x,
+              const std::tuple<double, double>& y)
+{
+    return std::get<0>(x) < std::get<0>(y);
+}
+
+
+
 class Constraints
 {
     private:
-        std::vector<double> forbidden_xs;
-        std::vector<double> forbidden_ys;
+
+        // The corners of the rectangles
+        std::set<std::tuple<double, double>,
+                 decltype(&less_fst)> corners;
 
     public:
         Constraints();
@@ -31,6 +45,7 @@ class Constraints
 /* IMPLEMENTATIONS FOLLOW */
 
 Constraints::Constraints()
+:corners(&less_fst)
 {
 
 }
@@ -40,37 +55,30 @@ Constraints::Constraints()
 void Constraints::add_rectangle(double x, double y)
 {
     // First, prune redundant old rectangles
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_ys.end())
+    auto it = corners.begin();
+    double _x, _y;
+    while(it != corners.end())
     {
-        if(x >= *it1 && y >= *it2)
-        {
-            it1 = forbidden_xs.erase(it1);
-            it2 = forbidden_ys.erase(it2);
-        }
+        std::tie(_x, _y) = *it;
+        if(x >= _x && y >= _y)
+            it = corners.erase(it);
         else
-        {
-            ++it1;
-            ++it2;
-        }
+            ++it;
     }
 
-    forbidden_xs.push_back(x);
-    forbidden_ys.push_back(y);
+    corners.insert(std::tuple<double, double>{x, y});
 }
 
 
 bool Constraints::test(double x, double y) const
 {
-    auto it1 = forbidden_xs.begin();
-    auto it2 = forbidden_ys.begin();
-    while(it1 != forbidden_xs.end() && it2 != forbidden_xs.end())
+    // Old inefficient way
+    double _x, _y;
+    for(auto it=corners.begin(); it != corners.end(); ++it)
     {
-        if(x < *it1 && y < *it2)
+        std::tie(_x, _y) = *it;
+        if(x < _x && y < _y)
             return false;
-        ++it1;
-        ++it2;
     }
     return true;
 }
@@ -78,7 +86,7 @@ bool Constraints::test(double x, double y) const
 
 size_t Constraints::size() const
 {
-    return forbidden_xs.size();
+    return corners.size();
 }
 
 } // namespace
