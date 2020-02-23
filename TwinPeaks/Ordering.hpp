@@ -2,6 +2,7 @@
 #define TwinPeaks_Ordering_hpp
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <tuple>
 #include <vector>
@@ -41,7 +42,7 @@ double Q(int xr, int yr, int num_particles, bool at_particle)
         xrf += 0.5;
         yrf += 0.5;
     }
-    return N/((N-xrf)*(N-yrf) + 1);
+    return N/((N-xrf)*(N-yrf) + 1) + xrf/pow(N + 10.0, 2);
 }
 
 
