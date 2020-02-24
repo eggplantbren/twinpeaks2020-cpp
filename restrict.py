@@ -32,10 +32,9 @@ for rep in range(reps):
     S = 0.5*tot*(tot-1) + tot
     S[tot % 2 == 0] += xr[tot % 2 == 0]
     S[tot % 2 != 0] += yr[tot % 2 != 0]
-    print(tot)
 
     # Worst particle
-    thresh = min(list(zip(Q, S)))
+    thresh = min(S) #min(list(zip(Q, S)))
 
     # Grid - new particles would land here
     # New particles have xr in {0, 1, ..., N}/N (length N)
@@ -87,7 +86,7 @@ for rep in range(reps):
 #            print(x_new, y_new, Q_new, S_new, 1)
 #    exit()
 
-    good.append((Q_new, S_new) > thresh)
+    good.append(S_new > thresh)
     if (rep+1)%1000 == 0:
         print(rep+1, np.mean(good), np.std(good)/np.sqrt(rep+1))
 
