@@ -15,7 +15,7 @@ namespace TwinPeaks
 * Convert ranks (a pair) to the target scalar
 */
 
-double Q(int xr, int yr, int num_particles, bool at_particle=true);
+double Q(int xr, int yr, bool at_particle=true);
 
 /*
 * Compute ranks of all scalars with respect to the whole collection.
@@ -30,13 +30,11 @@ std::tuple<std::vector<int>, std::vector<int>>
 * Convert ranks (a pair) to the target scalar
 */
 
-double Q(int xr, int yr, int num_particles, bool at_particle)
+double Q(int xr, int yr, bool at_particle)
 {
     // Floats
     double xrf = xr;
     double yrf = yr;
-    double N = num_particles;
-    
 
     if(at_particle)
     {

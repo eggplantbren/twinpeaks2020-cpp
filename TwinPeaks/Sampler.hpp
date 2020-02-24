@@ -114,7 +114,7 @@ void Sampler<T>::compute_orderings()
 
     // Map ranks to total order
     for(int i=0; i<options.num_particles; ++i)
-        Qs[i] = Q(x_ranks[i], y_ranks[i], options.num_particles);
+        Qs[i] = Q(x_ranks[i], y_ranks[i]);
 
     // Find worst particle
     worst = 0;
@@ -177,7 +177,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::vector<std::tuple<double, double>> rects;
         for(xr=0; xr<N; ++xr)
         {
-            if(Q(xr, yr, N, false) < Qs[worst])
+            if(Q(xr, yr, false) < Qs[worst])
             {
                 rects.emplace_back(xs[x_indices[xr]],
                                           ys[y_indices[yr]]);
