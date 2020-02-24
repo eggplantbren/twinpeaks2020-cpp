@@ -32,17 +32,30 @@ std::tuple<std::vector<int>, std::vector<int>>
 
 double Q(int xr, int yr, int num_particles, bool at_particle)
 {
-    double N = num_particles;
-
     // Floats
     double xrf = xr;
     double yrf = yr;
+    double N = num_particles;
+    
+
     if(at_particle)
     {
         xrf += 0.5;
         yrf += 0.5;
     }
-    return N/((N-xrf)*(N-yrf) + 1) + xrf/pow(N + 10.0, 2);
+
+    double tot = xrf + yrf;
+    int itot = xr + yr;
+    if(at_particle)
+        ++itot;
+
+    double result = 0.5*tot*(tot - 1.0) + tot;
+    if(itot%2 == 0)
+        result += xrf;
+    else
+        result += yrf;
+
+    return result;
 }
 
 

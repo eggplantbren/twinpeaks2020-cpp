@@ -27,7 +27,7 @@ for i in range(5*output.shape[0]//num_particles):
 
     plt.clf()
     plt.plot(points[:-num_particles,1], points[:-num_particles,2], "k.", alpha=0.2, markersize=1)
-    plt.plot(points[-num_particles:,1], points[-num_particles:,2], "b.", alpha=0.5, markersize=2)
+    plt.plot(points[-num_particles:,1], points[-num_particles:,2], "bo", alpha=0.5, markersize=5)
     plt.xlabel("$f_1$")
     plt.ylabel("$f_2$")
 

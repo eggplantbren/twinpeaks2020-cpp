@@ -90,21 +90,21 @@ bool Constraints::test(double x, double y) const
 {
     // New efficient way
 
-    // The rectangle just after (x, y), if there is one.
-    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
-    if(it == corners.end())
-        return true;
+//    // The rectangle just after (x, y), if there is one.
+//    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
+//    if(it == corners.end())
+//        return true;
 
-    return y > it->y;
+//    return y > it->y;
 
 
-//    // Old inefficient way
-//    for(auto it=corners.begin(); it != corners.end(); ++it)
-//    {
-//        if(x < it->x && y < it->y)
-//            return false;
-//    }
-//    return true;
+    // Old inefficient way
+    for(auto it=corners.begin(); it != corners.end(); ++it)
+    {
+        if(x < it->x && y < it->y)
+            return false;
+    }
+    return true;
 }
 
 

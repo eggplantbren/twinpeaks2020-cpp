@@ -1,5 +1,5 @@
 #include <iostream>
-#include <TwinPeaks/Example.hpp>
+#include <TwinPeaks/Harder.hpp>
 #include <TwinPeaks/Potts.hpp>
 #include <TwinPeaks/Sampler.hpp>
 
@@ -12,7 +12,7 @@ int main()
     RNG rng;
 
     // Create and run sampler
-    Sampler<Example> sampler(RunOptions(1000, 1000, 10, 120.0), rng);
+    Sampler<Harder> sampler(RunOptions(1000, 1000, 10, 120.0), rng);
     sampler.run(rng);
 
     return 0;
