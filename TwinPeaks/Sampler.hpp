@@ -155,6 +155,20 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 
         std::cout << "# Number of forbidden rectangles = ";
         std::cout << constraints.size() << "." << std::endl;
+
+        // Number of off-diagonal points
+        std::vector<int> temp(options.num_particles);
+        double mean = 0.0;
+        for(int i=0; i<options.num_particles; ++i)
+        {
+            temp[i] = x_ranks[i] + y_ranks[i] - (options.num_particles-1);
+            mean += temp[i]/options.num_particles;
+        }
+        double mean_abs_dev = 0.0;
+        for(int i=0; i<options.num_particles; ++i)
+            mean_abs_dev += std::abs(temp[i] - mean)/options.num_particles;
+        std::cout << "# Spread around diagonal = ";
+        std::cout << mean_abs_dev << '.' << std::endl;
     }
 
     // Save worst particle
