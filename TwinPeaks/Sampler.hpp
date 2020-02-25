@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include "Misc.hpp"
 #include "Ordering.hpp"
 #include <ostream>
@@ -32,6 +33,10 @@ class Sampler
         // Validity flag - can the sampler be run?
         bool valid;
 
+        // Flip x and y ranks in total ordering?
+        bool flip;
+        std::shared_ptr<Sampler<T>> fork; // Forked sampler with flipped order
+
         // The particles
         std::vector<T> particles;
 
@@ -58,10 +63,13 @@ class Sampler
         // Do one NS iteration
         void advance(RNG& rng, bool last_iteration=false);
 
-    public:
+        // Does the fork exist?
+        bool fork_exists() const;
 
-        // Default constructor disabled
-        Sampler() = delete;
+        // Fork the sampler
+        void create_fork();
+
+    public:
 
         // Constructor where you provide the number of particles
         // and an RNG for particle initialisation
@@ -79,6 +87,8 @@ Sampler<T>::Sampler(RunOptions _options, RNG& rng)
 :options(std::move(_options))
 ,iteration(1)
 ,valid(true)
+,flip(false)
+,fork(nullptr)
 ,particles(options.num_particles)
 ,xs(options.num_particles)
 ,ys(options.num_particles)
@@ -104,6 +114,23 @@ Sampler<T>::Sampler(RunOptions _options, RNG& rng)
     options.save();
 }
 
+template<typename T>
+bool Sampler<T>::fork_exists() const
+{
+    // From main sampler, a non-null 'fork' object indicates the existence
+    // of the forked sampler.
+
+    // From the forked sampler, the fact that 'flip' is true indicates that
+    // we are in the forked sampler.
+
+    if(fork.get() != nullptr)
+        return true;
+    if(flip)
+        return true;
+
+    return false;
+}
+
 
 template<typename T>
 void Sampler<T>::compute_orderings()
@@ -114,7 +141,7 @@ void Sampler<T>::compute_orderings()
 
     // Map ranks to total order
     for(int i=0; i<options.num_particles; ++i)
-        Qs[i] = Q(x_ranks[i], y_ranks[i]);
+        Qs[i] = Q(x_ranks[i], y_ranks[i], true, flip);
 
     // Find worst particle
     worst = 0;
@@ -134,9 +161,26 @@ void Sampler<T>::run(RNG& rng)
     }
     int iterations = static_cast<int>(options.num_particles
                                                 *options.depth);
+
     for(int i=0; i<iterations; ++i)
+    {
         advance(rng, i==iterations-1);
+        if(fork_exists())
+            fork->advance(rng, i==iterations-1);        
+    }
     valid = false;
+}
+
+
+template<typename T>
+void Sampler<T>::create_fork()
+{
+    if(fork_exists())
+        throw std::logic_error("Can't fork sampler - it's already happened.");
+
+    std::cout << "# Forking sampler." << std::endl;
+    fork = std::shared_ptr<Sampler<T>>(new Sampler<T>(*this));
+    fork->flip = true;
 }
 
 
@@ -145,6 +189,25 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
 {
     bool output_message = options.num_particles <= 100 ||
                                 iteration % options.num_particles == 0;
+
+    // Number of off-diagonal points
+    std::vector<int> temp(options.num_particles);
+    double mean = 0.0;
+    for(int i=0; i<options.num_particles; ++i)
+    {
+        temp[i] = x_ranks[i] + y_ranks[i] - (options.num_particles-1);
+        mean += temp[i]/options.num_particles;
+    }
+    double mean_abs_dev = 0.0;
+    for(int i=0; i<options.num_particles; ++i)
+        mean_abs_dev += std::abs(temp[i] - mean)/options.num_particles;
+
+    // Test for degeneracy of particle ranks
+    if(mean_abs_dev == 0.0 && !fork_exists())
+    {
+        // Create the fork
+        create_fork();
+    }
 
     // Progress message
     if(output_message)
@@ -156,17 +219,6 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::cout << "# Number of forbidden rectangles = ";
         std::cout << constraints.size() << "." << std::endl;
 
-        // Number of off-diagonal points
-        std::vector<int> temp(options.num_particles);
-        double mean = 0.0;
-        for(int i=0; i<options.num_particles; ++i)
-        {
-            temp[i] = x_ranks[i] + y_ranks[i] - (options.num_particles-1);
-            mean += temp[i]/options.num_particles;
-        }
-        double mean_abs_dev = 0.0;
-        for(int i=0; i<options.num_particles; ++i)
-            mean_abs_dev += std::abs(temp[i] - mean)/options.num_particles;
         std::cout << "# Spread around diagonal = ";
         std::cout << mean_abs_dev << '.' << std::endl;
     }
@@ -191,7 +243,7 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::vector<std::tuple<double, double>> rects;
         for(xr=0; xr<N; ++xr)
         {
-            if(Q(xr, yr, false) < Qs[worst])
+            if(Q(xr, yr, false, flip) < Qs[worst])
             {
                 rects.emplace_back(xs[x_indices[xr]],
                                           ys[y_indices[yr]]);
@@ -289,6 +341,7 @@ void Sampler<T>::write_output() const
 
     // Output scalars
     fout << iteration << ',';
+    fout << fork_exists() << ',';
     fout << xs[worst] << ',';
     fout << ys[worst] << std::endl;
 
@@ -303,7 +356,7 @@ void Sampler<T>::write_output() const
         fout.open("output/particles.csv", std::ios::out);
     else
         fout.open("output/particles.csv", std::ios::out | std::ios::app);
-    fout << iteration << ',';
+    fout << iteration << ',' << fork_exists() << ',';
     fout << particles[worst].render() << std::endl;
     fout.close();
 }

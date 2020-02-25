@@ -7,7 +7,7 @@ import yaml
 output = np.loadtxt("output/scalars.csv", delimiter=",")
 
 plt.figure(figsize=(9, 9))
-plt.plot(output[:,1], output[:,2], "k.", alpha=0.2, markersize=1)
+plt.plot(output[:,2], output[:,3], "k.", alpha=0.2, markersize=1)
 plt.xlabel("$f_1$")
 plt.ylabel("$f_2$")
 plt.show()
@@ -26,8 +26,8 @@ for i in range(5*output.shape[0]//num_particles):
     points = output[0:(((i+1)*num_particles)//5), :]
 
     plt.clf()
-    plt.plot(points[:-num_particles,1], points[:-num_particles,2], "k.", alpha=0.2, markersize=1)
-    plt.plot(points[-num_particles:,1], points[-num_particles:,2], "bo", alpha=0.5, markersize=5)
+    plt.plot(points[:-num_particles,2], points[:-num_particles,3], "k.", alpha=0.2, markersize=1)
+    plt.plot(points[-num_particles:,2], points[-num_particles:,3], "bo", alpha=0.5, markersize=5)
     plt.xlabel("$f_1$")
     plt.ylabel("$f_2$")
 
