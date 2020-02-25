@@ -69,6 +69,9 @@ class Sampler
         // Fork the sampler
         void create_fork();
 
+        // Sampler id. 0=pre-fork, 1 and 2 are post-fork
+        int sampler_id() const;
+
     public:
 
         // Constructor where you provide the number of particles
@@ -131,6 +134,16 @@ bool Sampler<T>::fork_exists() const
     return false;
 }
 
+template<typename T>
+int Sampler<T>::sampler_id() const
+{
+    if(!fork_exists())
+        return 0;
+    if(flip)
+        return 2;
+    return 1;
+}
+
 
 template<typename T>
 void Sampler<T>::compute_orderings()
@@ -181,6 +194,7 @@ void Sampler<T>::create_fork()
     std::cout << "# Forking sampler." << std::endl;
     fork = std::shared_ptr<Sampler<T>>(new Sampler<T>(*this));
     fork->flip = true;
+    fork->compute_orderings();
 }
 
 
@@ -341,7 +355,7 @@ void Sampler<T>::write_output() const
 
     // Output scalars
     fout << iteration << ',';
-    fout << fork_exists() << ',';
+    fout << sampler_id() << ',';
     fout << xs[worst] << ',';
     fout << ys[worst] << std::endl;
 
@@ -356,7 +370,7 @@ void Sampler<T>::write_output() const
         fout.open("output/particles.csv", std::ios::out);
     else
         fout.open("output/particles.csv", std::ios::out | std::ios::app);
-    fout << iteration << ',' << fork_exists() << ',';
+    fout << iteration << ',' << sampler_id() << ',';
     fout << particles[worst].render() << std::endl;
     fout.close();
 }

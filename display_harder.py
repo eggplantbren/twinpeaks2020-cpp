@@ -33,7 +33,8 @@ run_options = yaml.load(f, Loader=yaml.SafeLoader)
 f.close()
 
 # Log prior weights
-logw = -np.arange(output.shape[0])/run_options["num_particles"]
+logw = -output[:,0]/run_options["num_particles"]
+logw[output[:,1] != 0] += np.log(0.5) # Forked sampler has twice the points
 depth = -np.min(logw)
 logw = logw - logsumexp(logw)
 
@@ -41,7 +42,7 @@ logw = logw - logsumexp(logw)
 def canonical(T):
 
     # Un-normalised posterior/canonical weights
-    logL = output[:,1]/T[0] + output[:,2]/T[1]
+    logL = output[:,2]/T[0] + output[:,3]/T[1]
     logW = logw + logL
     logZ = logsumexp(logW)
 
@@ -88,7 +89,7 @@ def grid():
 T1, T2, true_logZ, est_logZ, true_H, est_H, ess = grid()
 
 # Apply some masking
-mask = (est_H > 0.8*depth) | (ess < 10.0)
+mask = (est_H > 0.8*depth)# | (ess < 10.0)
 est_logZ = np.ma.masked_where(mask, est_logZ)
 est_H = np.ma.masked_where(mask, est_H)
 
