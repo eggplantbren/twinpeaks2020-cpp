@@ -250,10 +250,9 @@ void Sampler<T>::advance(RNG& rng, bool final_iteration)
         // Right hand bound to begin searching
         int start=N-1;
 
-//        // Initial geometric shrinking
-//        // Doesn't work, but could speed things up if I can get it to
-//        while(Q(start/2, yr, false, flip) >= Qs[worst])
-//            start /= 2;
+        // Initial geometric shrinking
+        while(start > 0 && Q(start/2, yr, false, flip) >= Qs[worst])
+            start /= 2;
 
         for(int xr=start; xr>=0; --xr)
         {
