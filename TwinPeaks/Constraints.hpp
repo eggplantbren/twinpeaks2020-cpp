@@ -71,7 +71,11 @@ Constraints::Constraints()
 
 void Constraints::add_rectangle(double x, double y)
 {
-    // First, prune redundant old rectangles
+    // If new rectangle is redundant, don't do anything
+    if(!test(x, y))
+        return;
+
+    // Prune rectangles made redundant bu the new one
     for(auto it=corners.begin(); it != corners.end();)
     {
         if(x >= it->x && y >= it->y)
@@ -80,7 +84,7 @@ void Constraints::add_rectangle(double x, double y)
             ++it;
     }
 
-    // Add the new point (in the right place)
+    // Add the new rectangle (in the right place)
     auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
     corners.insert(it, Point{x, y});
 }
@@ -88,23 +92,11 @@ void Constraints::add_rectangle(double x, double y)
 
 bool Constraints::test(double x, double y) const
 {
-    // New efficient way
-
-//    // The rectangle just after (x, y), if there is one.
-//    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
-//    if(it == corners.end())
-//        return true;
-
-//    return y > it->y;
-
-
-    // Old inefficient way
-    for(auto it=corners.begin(); it != corners.end(); ++it)
-    {
-        if(x < it->x && y < it->y)
-            return false;
-    }
-    return true;
+    // The rectangle just after (x, y) in terms of x, if there is one.
+    auto it = std::lower_bound(corners.begin(), corners.end(), Point{x, y});
+    if(it == corners.end())
+        return true;
+    return y >= it->y;
 }
 
 

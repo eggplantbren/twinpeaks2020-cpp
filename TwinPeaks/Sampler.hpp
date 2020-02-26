@@ -245,24 +245,25 @@ void Sampler<T>::advance(RNG& rng, bool final_iteration)
 
     // Add new forbidden rectangles
     const int& N=options.num_particles;
-    int xr;
-    for(int yr=N-1; yr>=0; --yr)
+    for(int yr=0; yr<N; ++yr)
     {
-        std::vector<std::tuple<double, double>> rects;
-        for(xr=0; xr<N; ++xr)
+        // Right hand bound to begin searching
+        int start=N-1;
+
+//        // Initial geometric shrinking
+//        // Doesn't work, but could speed things up if I can get it to
+//        while(Q(start/2, yr, false, flip) >= Qs[worst])
+//            start /= 2;
+
+        for(int xr=start; xr>=0; --xr)
         {
             if(Q(xr, yr, false, flip) < Qs[worst])
             {
-                rects.emplace_back(xs[x_indices[xr]],
+                constraints.add_rectangle(xs[x_indices[xr]],
                                           ys[y_indices[yr]]);
-            }
-            else
+                start = xr;
                 break;
-        }
-        if(rects.size() > 0)
-        {
-            constraints.add_rectangle(std::get<0>(rects.back()),
-                                  std::get<1>(rects.back()));
+            }
         }
     }
 
