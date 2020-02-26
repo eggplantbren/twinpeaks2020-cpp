@@ -21,7 +21,6 @@ def canonical_true(T):
 
     return np.array([logZ_true, H_true])
 
-
 @numba.jit("float64(float64[:])")
 def logsumexp(values):
 	biggest = np.max(values)
@@ -38,7 +37,8 @@ run_options = yaml.load(f, Loader=yaml.SafeLoader)
 f.close()
 
 # Log prior weights
-logw = -np.arange(output.shape[0])/run_options["num_particles"]
+logw = -output[:,0]/run_options["num_particles"]
+logw[output[:,1] != 0] += np.log(0.5) # Forked sampler has twice the points
 depth = -np.min(logw)
 logw = logw - logsumexp(logw)
 
@@ -46,14 +46,15 @@ logw = logw - logsumexp(logw)
 def canonical(T):
 
     # Un-normalised posterior/canonical weights
-    logL = output[:,1]/T[0] + output[:,2]/T[1]
+    logL = output[:,2]/T[0] + output[:,3]/T[1]
     logW = logw + logL
     logZ = logsumexp(logW)
 
     # Normalised posterior/canonical weights
     P = np.exp(logW - logZ)
     H = np.sum(P*(logL - logZ))
-    return np.array([logZ, H])
+    ess = np.exp(-np.sum(P*np.log(P + 1E-300)))
+    return np.array([logZ, H, ess])
 
 
 @numba.jit(forceobj=True)
@@ -69,6 +70,7 @@ def grid():
     est_logZ  = T1.copy()
     true_H = T1.copy()
     est_H  = T1.copy()
+    ess  = T1.copy()
 
     for i in range(T1.shape[0]):
         for j in range(T1.shape[1]):
@@ -81,16 +83,17 @@ def grid():
             est_logZ[i, j]  = est[0]
             true_H[i, j] = true[1]
             est_H[i, j]  = est[1]
+            ess[i, j] = est[2]
 
         print(i+1)
 
-    return [T1, T2, true_logZ, est_logZ, true_H, est_H]
+    return [T1, T2, true_logZ, est_logZ, true_H, est_H, ess]
 
 
-T1, T2, true_logZ, est_logZ, true_H, est_H = grid()
+T1, T2, true_logZ, est_logZ, true_H, est_H, ess = grid()
 
 # Apply some masking
-mask = est_H > 0.8*depth
+mask = (est_H > 0.8*depth)# | (ess < 10.0)
 est_logZ = np.ma.masked_where(mask, est_logZ)
 est_H = np.ma.masked_where(mask, est_H)
 

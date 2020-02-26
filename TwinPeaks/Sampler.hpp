@@ -27,11 +27,8 @@ class Sampler
         // Run options
         RunOptions options;
 
-        // Iteration counter
+        // Iteration counter and depth
         int iteration;
-
-        // Validity flag - can the sampler be run?
-        bool valid;
 
         // Flip x and y ranks in total ordering?
         bool flip;
@@ -61,7 +58,7 @@ class Sampler
         void write_output() const;
 
         // Do one NS iteration
-        void advance(RNG& rng, bool last_iteration=false);
+        void advance(RNG& rng, bool final_iteration=false);
 
         // Does the fork exist?
         bool fork_exists() const;
@@ -89,7 +86,6 @@ template<typename T>
 Sampler<T>::Sampler(RunOptions _options, RNG& rng)
 :options(std::move(_options))
 ,iteration(1)
-,valid(true)
 ,flip(false)
 ,fork(nullptr)
 ,particles(options.num_particles)
@@ -166,22 +162,14 @@ void Sampler<T>::compute_orderings()
 template<typename T>
 void Sampler<T>::run(RNG& rng)
 {
-    if(!valid)
-    {
-        std::cerr << "Cannot run sampler. It's probably already been done.";
-        std::cerr << std::endl;
-        return;
-    }
     int iterations = static_cast<int>(options.num_particles
                                                 *options.depth);
-
     for(int i=0; i<iterations; ++i)
     {
         advance(rng, i==iterations-1);
         if(fork_exists())
             fork->advance(rng, i==iterations-1);        
     }
-    valid = false;
 }
 
 
@@ -194,12 +182,14 @@ void Sampler<T>::create_fork()
     std::cout << "# Forking sampler." << std::endl;
     fork = std::shared_ptr<Sampler<T>>(new Sampler<T>(*this));
     fork->flip = true;
+
+    // Recompute orderings for the fork
     fork->compute_orderings();
 }
 
 
 template<typename T>
-void Sampler<T>::advance(RNG& rng, bool last_iteration)
+void Sampler<T>::advance(RNG& rng, bool final_iteration)
 {
     bool output_message = options.num_particles <= 100 ||
                                 iteration % options.num_particles == 0;
@@ -227,8 +217,9 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
     if(output_message)
     {
         std::cout << std::setprecision(12);
-        std::cout << "# Iteration " << iteration << ". ";
-        std::cout << "Depth ~= " << (double)iteration/options.num_particles << " nats.\n";
+        std::cout << "# Sampler " << sampler_id() << ", ";
+        std::cout << "iteration " << iteration << ". ";
+        std::cout << "Depth ~= " << double(iteration)/options.num_particles << " nats.\n";
 
         std::cout << "# Number of forbidden rectangles = ";
         std::cout << constraints.size() << "." << std::endl;
@@ -246,8 +237,11 @@ void Sampler<T>::advance(RNG& rng, bool last_iteration)
         std::cout << ys[worst] << ")." << std::endl;
     }
 
-    if(last_iteration)
+    if(final_iteration)
+    {
+        std::cout << '#' << std::endl;
         return;
+    }
 
     // Add new forbidden rectangles
     const int& N=options.num_particles;
@@ -346,16 +340,25 @@ void Sampler<T>::write_output() const
     // Open the output file
     std::fstream fout;
     if(iteration == 1)
+    {
         fout.open("output/scalars.csv", std::ios::out);
+        fout << "iteration,sampler_id,ln_w_unnormed,f1,f2" << std::endl;
+    }
+
     else
         fout.open("output/scalars.csv", std::ios::out | std::ios::app);
 
     // Set precision
     fout << std::setprecision(12);
 
+    double ln_w = -double(iteration)/options.num_particles;
+    if(sampler_id() != 0)
+        ln_w += log(0.5);
+
     // Output scalars
     fout << iteration << ',';
     fout << sampler_id() << ',';
+    fout << ln_w << ',';
     fout << xs[worst] << ',';
     fout << ys[worst] << std::endl;
 

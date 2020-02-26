@@ -1,42 +1,51 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import subprocess
-import yaml
+
+output = pd.read_csv("output/scalars.csv")
+
+# Log prior weights
+logw = output["ln_w_unnormed"].to_numpy()
+depth = -logw.copy()
+depth[output["sampler_id"] != 0] += np.log(0.5)
+
+# Scalars
+f1 = output["f1"].to_numpy()
+f2 = output["f2"].to_numpy()
 
 # Plot dead particles
-output = np.loadtxt("output/scalars.csv", delimiter=",")
-
 plt.figure(figsize=(9, 9))
-plt.plot(output[:,2], output[:,3], "k.", alpha=0.2, markersize=1)
+plt.plot(f1, f2, "k.", alpha=0.2, markersize=1)
 plt.xlabel("$f_1$")
 plt.ylabel("$f_2$")
 plt.show()
-
-f = open("output/run_options.yaml")
-run_options = yaml.load(f, Loader=yaml.SafeLoader)
-f.close()
-num_particles = run_options["num_particles"]
 
 subprocess.run("rm output/*.png", shell=True)
 subprocess.run("rm output/movie.mp4", shell=True)
 
 plt.figure(figsize=(9, 9))
-for i in range(5*output.shape[0]//num_particles):
-
-    points = output[0:(((i+1)*num_particles)//5), :]
+num_frames = -int(5*logw.min())
+for i in range(num_frames):
+    d = 0.2*i
+    covered = depth <= d
+    recent = covered & (depth >= d-1)
 
     plt.clf()
-    plt.plot(points[:-num_particles,2], points[:-num_particles,3], "k.", alpha=0.2, markersize=1)
-    plt.plot(points[-num_particles:,2], points[-num_particles:,3], "bo", alpha=0.5, markersize=5)
+    plt.plot(f1[covered], f2[covered], "k.", alpha=0.2, markersize=1)
+    plt.plot(f1[recent & (output["sampler_id"] == 0)],
+             f2[recent & (output["sampler_id"] == 0)], "bo", alpha=0.5, markersize=5)
+    plt.plot(f1[recent & (output["sampler_id"] == 1)],
+             f2[recent & (output["sampler_id"] == 1)], "go", alpha=0.5, markersize=5)
+    plt.plot(f1[recent & (output["sampler_id"] == 2)],
+             f2[recent & (output["sampler_id"] == 2)], "go", alpha=0.5, markersize=5)
     plt.xlabel("$f_1$")
     plt.ylabel("$f_2$")
-
-    depth = (i+1)/5
-    plt.title(f"Depth = {depth} nats.")
+    plt.title(f"Depth = {d:.1f} nats.")
 
     filename = "output/" + "%0.6d"%(i+1) + ".png"
     plt.savefig(filename)
-    print(filename)
+    print("Saved " + filename + f" [{num_frames} total]", end="\r")
 
 subprocess.run("ffmpeg -framerate 20 -i output/%06d.png -c:v libx264 -b:v 1M output/movie.mp4", shell=True)
 
