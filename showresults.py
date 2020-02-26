@@ -38,7 +38,7 @@ for i in range(num_frames):
     plt.plot(f1[recent & (output["sampler_id"] == 1)],
              f2[recent & (output["sampler_id"] == 1)], "go", alpha=0.5, markersize=5)
     plt.plot(f1[recent & (output["sampler_id"] == 2)],
-             f2[recent & (output["sampler_id"] == 2)], "go", alpha=0.5, markersize=5)
+             f2[recent & (output["sampler_id"] == 2)], "ro", alpha=0.5, markersize=5)
     plt.xlabel("$f_1$")
     plt.ylabel("$f_2$")
     plt.title(f"Depth = {d:.1f} nats.")
