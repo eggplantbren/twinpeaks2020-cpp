@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
-import yaml
+import pandas as pd
 
 # Compute true log(Z) and H at the temperatures requested
 @numba.jit("float64[:](float64[:])")
@@ -31,22 +31,22 @@ def logsumexp(values):
 
 
 # Load output and run parameters
-output = np.loadtxt("output/scalars.csv", delimiter=",")
-f = open("output/run_options.yaml")
-run_options = yaml.load(f, Loader=yaml.SafeLoader)
-f.close()
+output = pd.read_csv("output/scalars.csv")
 
 # Log prior weights
-logw = -output[:,0]/run_options["num_particles"]
-logw[output[:,1] != 0] += np.log(0.5) # Forked sampler has twice the points
-depth = -np.min(logw)
+logw = output["ln_w_unnormed"].to_numpy()
+depth = np.max(logw) - np.min(logw)
 logw = logw - logsumexp(logw)
+
+# Scalars
+f1 = output["f1"].to_numpy()
+f2 = output["f2"].to_numpy()
 
 @numba.jit("float64[:](float64[:])")
 def canonical(T):
 
     # Un-normalised posterior/canonical weights
-    logL = output[:,2]/T[0] + output[:,3]/T[1]
+    logL = f1/T[0] + f2/T[1]
     logW = logw + logL
     logZ = logsumexp(logW)
 
@@ -93,7 +93,21 @@ def grid():
 T1, T2, true_logZ, est_logZ, true_H, est_H, ess = grid()
 
 # Apply some masking
-mask = (est_H > 0.8*depth)# | (ess < 10.0)
+limit = 0.0
+if depth < 10.0:
+    limit = depth - 5.0
+elif depth < 50.0:
+    limit = 0.5*depth
+elif depth < 100.0:
+    limit = 0.7*depth
+elif depth < 200.0:
+    limit = 0.8*depth
+else:
+    limit = 0.9*depth
+print(f"Setting H limit to {limit} nats.")
+
+mask = (est_H > limit) | (ess < 5.0)
+
 est_logZ = np.ma.masked_where(mask, est_logZ)
 est_H = np.ma.masked_where(mask, est_H)
 
@@ -103,7 +117,7 @@ plt.title("True log(Z)")
 
 plt.subplot(2, 3, 2)
 plt.imshow(est_logZ, origin="lower")
-plt.title("Estimated log(Z)")
+plt.title("Estimated ln(Z)")
 
 plt.subplot(2, 3, 3)
 resid = est_logZ - true_logZ
