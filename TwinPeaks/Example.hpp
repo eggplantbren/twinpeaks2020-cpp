@@ -72,10 +72,8 @@ std::tuple<double, double> Example::get_scalars() const
 
     for(int i=0; i<N; ++i)
     {
-        if(i < N/2)
-            f1 += -0.5*tau*pow(xs[i] - 0.5, 2);
-        else
-            f2 += -0.5*tau*pow(xs[i] - 0.5, 2);
+        f1 += -0.5*tau*pow(xs[i] - 0.4, 2);
+        f2 += -0.5*tau*pow(xs[i] - 0.6, 2);
     }
 
     return {f1, f2};
